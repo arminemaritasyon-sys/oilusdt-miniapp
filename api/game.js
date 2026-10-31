@@ -45,7 +45,7 @@ export default async function handler(req, res) {
           extra.earned = Math.round((await G.actSell(c, s, u)) * 1e4) / 1e4;
           break;
         case 'upgrade':
-          extra.upgrade = await G.actUpgrade(c, s, u, body.source || 'usd');
+          extra.upgrade = await G.actUpgrade(c, s, u);
           break;
         case 'daily':
           extra.reward = G.actDaily(s, u);
