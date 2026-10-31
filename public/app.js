@@ -878,7 +878,55 @@
         <div><span>Müzik</span><b><button class="btn small ${prefs.music ? 'green' : 'done'}" id="tMusic">${prefs.music ? 'AÇIK' : 'KAPALI'}</button></b></div>
         <div><span>Titreşim</span><b><button class="btn small ${prefs.haptic ? 'green' : 'done'}" id="tHaptic">${prefs.haptic ? 'AÇIK' : 'KAPALI'}</button></b></div>
       </div>
-      <div class="btns"><button class="btn done" data-close>Kapat</button></div>`);
+      <div class="btns">
+        <button class="btn account-delete" id="openAccountDelete">🗑️ Hesabımı Sil</button>
+        <button class="btn done" data-close>Kapat</button>
+      </div>`);
+    $('#openAccountDelete').onclick = () => {
+      sheet(`
+        <h2>⚠️ Hesabımı Sil</h2>
+        <div class="account-delete-warning">
+          <b>Bu işlem geri alınamaz.</b>
+          <p>Petrolün, pompa seviyen, gücün, görevlerin ve mevcut Coin/çekilebilir bakiyen sıfırlanır. Satın aldığın paketler yeni hesabına geri verilmez.</p>
+          <p>Ödeme ve çekim kayıtları muhasebe ve iade işlemleri için saklanabilir. Bekleyen çekim veya ödeme işlemi varken hesabını silemezsin.</p>
+          <p>Tekrar giriş yaptığında oyuna başlangıç seviyesinden devam edebilirsin.</p>
+        </div>
+        <label class="account-delete-label" for="accountDeleteWord">Onaylamak için <b>HESABIMI SİL</b> yaz:</label>
+        <input id="accountDeleteWord" type="text" placeholder="HESABIMI SİL" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <div class="btns">
+          <button class="btn account-delete" id="confirmAccountDelete" disabled>HESABI KALICI OLARAK SİL</button>
+          <button class="btn done" id="cancelAccountDelete">Vazgeç</button>
+        </div>`);
+      const phrase = $('#accountDeleteWord');
+      const confirmDelete = $('#confirmAccountDelete');
+      phrase.oninput = () => {
+        confirmDelete.disabled = phrase.value.trim().toLocaleUpperCase('tr-TR') !== 'HESABIMI SİL';
+      };
+      $('#cancelAccountDelete').onclick = () => $('#btnSettings').onclick();
+      confirmDelete.onclick = () => run(async () => {
+        if (phrase.value.trim().toLocaleUpperCase('tr-TR') !== 'HESABIMI SİL') return;
+        confirmDelete.disabled = true;
+        const result = await api('delete_account', {
+          confirmation: 'HESABIMI SİL',
+          accept_forfeit: true,
+        });
+        if (!result.deleted) throw new Error('Hesap silme tamamlanamadı.');
+        S = null;
+        RW = null;
+        wdNet = null;
+        products = [];
+        closeSheet();
+        try {
+          const fresh = await api('init');
+          products = fresh.products || [];
+          crypto = fresh.crypto || { wallets: [] };
+          show('pump');
+          toast('Hesabın silindi. Yeni hesabın başlangıç seviyesinden açıldı.');
+        } catch (e) {
+          toast('Hesabın silindi. Tekrar başlamak için uygulamayı yeniden aç.', true);
+        }
+      });
+    };
     $('#tSound').onclick = () => {
       prefs.sound = !prefs.sound;
       savePrefs();

@@ -481,3 +481,12 @@ main { flex: 1; position: relative; min-height: 0; }
 .mv-amt b.minus { color: #f2c08a; }
 .mv-empty { text-align: center; color: var(--muted); font-size: 14px; line-height: 1.5; padding: 22px 6px; font-weight: 600; }
 .wd-status small.mono { font: 600 12.5px ui-monospace, Consolas, monospace; color: var(--muted); word-break: break-all; }
+
+/* Kullanıcıya ait kalıcı profil silme — geri alınamaz işlem uyarısı. */
+.btn.account-delete { background: #9c302f; color: #fff7f2; box-shadow: 0 5px 0 #5a1d1d; font-size: 15px; }
+.btn.account-delete:disabled { opacity: .4; box-shadow: none; cursor: not-allowed; }
+.account-delete-warning { padding: 13px 14px; margin: 12px 0 16px; background: #39221e; border: 2px solid #ad5248; border-radius: 14px; color: #ffe8df; font-size: 13px; line-height: 1.55; }
+.account-delete-warning > b { font-size: 17px; color: #ffb6aa; }
+.account-delete-warning p { margin: 8px 0 0; }
+.account-delete-label { display: block; margin-bottom: 9px; font-size: 13px; color: #fff0e8; }
+#accountDeleteWord { width: 100%; font-size: 17px; font-weight: 800; text-transform: uppercase; }
