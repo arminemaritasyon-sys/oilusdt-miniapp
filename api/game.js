@@ -4,6 +4,7 @@ import * as G from '../lib/game.js';
 import { activeWallets, createWalletInvoice, submitWalletInvoice, notifyAdminsSubmitted, publicInvoice } from '../lib/wallet.js';
 import * as R from '../lib/rewards.js';
 import { notifyWithdrawalGroup } from '../lib/payout_announcements.js';
+import { deletePlayerAccount } from '../lib/account_deletion.js';
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -22,6 +23,11 @@ export default async function handler(req, res) {
 
   try {
     const out = await tx(async (c) => {
+      // Profil silme normal oyun başlatma yolundan ayrı: hesap yoksa yeniden açma.
+      if (action === 'delete_account') {
+        const result = await deletePlayerAccount(c, tgUser.id, body.confirmation, body.accept_forfeit);
+        return { ok: true, ...result };
+      }
       const s = await G.loadSettings(c);
       if (s.maintenance > 0) throw new G.GameError('Bakım çalışması yapılıyor, birazdan tekrar dene.');
       let u = await G.ensureUser(c, s, tgUser, tgUser.start_param);
