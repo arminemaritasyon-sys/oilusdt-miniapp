@@ -341,30 +341,27 @@
 
   $('#btnUpgrade').onclick = () => {
     if (!S || S.upgrade_cost === null) return;
-    const cost = S.upgrade_cost;
-    const usdBalance = Number(S.balance) || 0;
-    const coinBalance = Number(S.coins) || 0;
+    // Coin burada çekilebilir USD bakiyesinin oyun içi adıdır (1 Coin = 1 USD).
+    const cost = Number(S.upgrade_cost);
+    const balance = Math.max(0, Number(S.balance) || 0);
+    const canPay = Number.isFinite(cost) && balance + 1e-9 >= cost;
     sheet(`
       <h2>Pompayı Yükselt</h2>
       <div class="rows">
         <div><span>Seviye</span><b>${S.level} → ${S.level + 1}</b></div>
         <div><span>Üretim artışı</span><b class="up">+%${fmt((S.next_mult - 1) * 100, 1)}</b></div>
-        <div><span>Yükseltme bedeli</span><b>${money(cost)}</b></div>
-        <div><span>Çekilebilir USD</span><b>${money(usdBalance)}</b></div>
-        <div><span>Oyun Coin</span><b>${fmt(coinBalance, 2)} Coin</b></div>
+        <div><span>Yükseltme bedeli</span><b>${fmt(cost, 2)} Coin</b></div>
+        <div><span>Coin</span><b>${fmt(balance, 2)} Coin</b></div>
       </div>
       <div class="btns">
-        <button class="btn teal" id="doUpgrade" ${usdBalance >= cost ? '' : 'disabled'}>USD BAKİYE İLE YÜKSELT</button>
-        <button class="btn" id="doUpgradeCoins" ${coinBalance >= cost ? '' : 'disabled'}>OYUN COIN İLE YÜKSELT</button>
+        <button class="btn teal" id="doUpgrade" ${canPay ? '' : 'disabled'}>${canPay ? 'COIN İLE YÜKSELT' : 'YETERSİZ COIN'}</button>
         <button class="btn done" data-close>Kapat</button>
       </div>`);
-    const upgrade = source => run(async () => {
-      await api('upgrade', { source });
+    $('#doUpgrade').onclick = () => run(async () => {
+      await api('upgrade');
       closeSheet();
       toast('Pompa seviye ' + S.level + ' oldu!', false, 'upgrade');
     });
-    $('#doUpgrade').onclick = () => upgrade('usd');
-    $('#doUpgradeCoins').onclick = () => upgrade('coins');
   };
 
   /* ---------- Sekmeler ---------- */
@@ -704,7 +701,7 @@
   let RW = null;
   let wdNet = null;
   const money = (n) => '$' + fmt(n, 2);
-  const kindName = { weekly: 'Haftalık ödül', referral: 'Referans ödülü', oil_referral: 'Petrol referans kazancı', oil_sale: 'Petrol satış kazancı', coin_migration: 'Mevcut coin aktarımı', withdraw: 'Çekim talebi', refund: 'Çekim iadesi', admin: 'Düzeltme' };
+  const kindName = { weekly: 'Haftalık ödül', referral: 'Referans ödülü', oil_referral: 'Petrol referans kazancı', oil_sale: 'Petrol satış kazancı', upgrade: 'Pompa yükseltme', coin_migration: 'Mevcut coin aktarımı', withdraw: 'Çekim talebi', refund: 'Çekim iadesi', admin: 'Düzeltme' };
   const wdStatus = { pending: 'BEKLEMEDE', approved: 'ONAYLANDI', paid: 'ÖDENDİ', rejected: 'REDDEDİLDİ' };
 
   function timeLeft(ts) {
@@ -720,7 +717,7 @@
     } catch (e) { toast(e.message, true); }
   }
 
-  const kindIco = { weekly: '🏆', referral: '👥', oil_referral: '👥', oil_sale: '🛢', coin_migration: '🪙', withdraw: '↗', refund: '↩', admin: '⚙' };
+  const kindIco = { weekly: '🏆', referral: '👥', oil_referral: '👥', oil_sale: '🛢', upgrade: '⚡', coin_migration: '🪙', withdraw: '↗', refund: '↩', admin: '⚙' };
   const fmtDate = (t) => new Date(t * 1000).toLocaleString('tr-TR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
   /** Bakiye hareketleri + çekim talepleri, en yeniden eskiye. */
