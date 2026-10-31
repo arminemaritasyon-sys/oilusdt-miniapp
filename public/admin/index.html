@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Oil Pump Admin</title>
+<link rel="stylesheet" href="/admin/admin.css?v=3">
+</head>
+<body>
+<form class="login card hidden" id="login">
+  <h1>🛢 Oil Pump Admin</h1>
+  <div class="alert err hidden" id="loginErr"></div>
+  <input type="password" name="password" placeholder="Şifre" autofocus required>
+  <button>Giriş</button>
+</form>
+<nav class="side hidden" id="side">
+  <div class="brand">🛢 Oil Pump</div>
+  <a href="#dash">Özet</a>
+  <a href="#users">Kullanıcılar</a>
+  <a href="#payments">Ödemeler</a>
+  <a href="#crypto">Kripto ödemeler</a>
+  <a href="#wallets">Cüzdanlar</a>
+  <a href="#rewards">Ödüller</a>
+  <a href="#withdrawals">Çekimler</a>
+  <a href="#products">Ürünler</a>
+  <a href="#tasks">Görevler</a>
+  <a href="#settings">Ekonomi</a>
+  <a href="#broadcast">Toplu mesaj</a>
+  <a href="#setup">Kurulum</a>
+  <a href="#logout" class="out">Çıkış</a>
+</nav>
+<main class="hidden" id="main"></main>
+<script src="/admin/admin.js?v=4"></script>
+</body>
+</html>

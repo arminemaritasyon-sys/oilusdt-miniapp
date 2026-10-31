@@ -1,0 +1,7 @@
+.git
+.vercel
+.env*
+*.log
+RECOVERY.md
+AGENTS.md
+test

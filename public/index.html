@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Oil Pump</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css?v=5">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="chip money">
+      <svg viewBox="0 0 48 32" class="bill"><rect x="1" y="3" width="46" height="26" rx="4" fill="#3f8f3a"/><rect x="5" y="7" width="38" height="18" rx="3" fill="#6cc25a"/><circle cx="24" cy="16" r="6" fill="#3f8f3a"/><text x="24" y="20.5" text-anchor="middle" font-size="11" font-weight="900" fill="#c9f2b8">$</text><rect x="13" y="1" width="5" height="30" rx="1.5" fill="#d9652b"/></svg>
+      <div><small>PARA</small><b id="coins">0</b></div>
+    </div>
+    <div class="top-btns">
+      <button class="icon-btn trophy" id="btnTop" aria-label="Sıralama">
+        <svg viewBox="0 0 24 24"><path fill="#f4c35b" d="M6 2h12v2h4v4a5 5 0 0 1-5 5 6 6 0 0 1-4 3v3h4v3H7v-3h4v-3a6 6 0 0 1-4-3 5 5 0 0 1-5-5V4h4Zm0 4H4v2a3 3 0 0 0 2 3Zm12 0v5a3 3 0 0 0 2-3V6Z"/></svg>
+      </button>
+      <button class="icon-btn" id="btnSettings" aria-label="Ayarlar">
+        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1L11 21h4l.4-2.9a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" transform="translate(-1 0)"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- PETROL -->
+    <section class="view pump-view active" id="v-pump">
+      <div class="sky night" id="sky">
+        <svg width="0" height="0" style="position:absolute">
+          <defs>
+            <symbol id="cloud" viewBox="0 0 200 80"><path d="M30 70a26 26 0 0 1 4-51 34 34 0 0 1 62-10 28 28 0 0 1 48 8 24 24 0 0 1 30 26 18 18 0 0 1-6 27Z"/></symbol>
+            <symbol id="bird" viewBox="0 0 40 20"><path class="w1" d="M20 12C15 4 8 3 1 6c6 0 12 2 19 6Z"/><path class="w2" d="M20 12c5-8 12-9 19-6-6 0-12 2-19 6Z"/></symbol>
+          </defs>
+        </svg>
+        <div class="stars"></div>
+        <div class="sun"><i></i></div>
+        <div class="moon"></div>
+        <div class="clouds">
+          <svg class="cl c1"><use href="#cloud"/></svg>
+          <svg class="cl c2"><use href="#cloud"/></svg>
+          <svg class="cl c3"><use href="#cloud"/></svg>
+          <svg class="cl c4"><use href="#cloud"/></svg>
+        </div>
+        <div class="birds">
+          <svg class="bd b1"><use href="#bird"/></svg>
+          <svg class="bd b2"><use href="#bird"/></svg>
+          <svg class="bd b3"><use href="#bird"/></svg>
+        </div>
+        <svg class="mountains" viewBox="0 0 400 120" preserveAspectRatio="none"><path class="m1" d="M0 120V70l40-30 30 18 45-48 50 52 30-20 45 30 40-40 50 45 30-15 40 25v53Z"/><path class="m2" d="M0 120V92l55-22 45 18 60-28 70 30 55-20 60 22 55-10v38Z"/></svg>
+      </div>
+      <div class="ground">
+        <svg class="pump" viewBox="0 0 360 210" id="pumpSvg" data-tier="1">
+          <defs>
+            <linearGradient id="gSteel" x1="0" x2="1"><stop offset="0" stop-color="#2b2d33"/><stop offset=".45" stop-color="#5b5f69"/><stop offset="1" stop-color="#1d1e22"/></linearGradient>
+            <linearGradient id="gBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a5e68"/><stop offset=".35" stop-color="#383b42"/><stop offset="1" stop-color="#1b1c20"/></linearGradient>
+            <linearGradient id="gRed" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6a52"/><stop offset=".55" stop-color="#d23c2c"/><stop offset="1" stop-color="#7e1f15"/></linearGradient>
+            <linearGradient id="gTank" x1="0" x2="1"><stop offset="0" stop-color="#4c5057"/><stop offset=".32" stop-color="#d7dbe1"/><stop offset=".55" stop-color="#9ea3ab"/><stop offset="1" stop-color="#3a3d43"/></linearGradient>
+            <linearGradient id="gTank2" x1="0" x2="1"><stop offset="0" stop-color="#3a3d43"/><stop offset=".35" stop-color="#a9aeb6"/><stop offset="1" stop-color="#2c2e33"/></linearGradient>
+            <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset=".5" stop-color="#e6b23a"/><stop offset="1" stop-color="#8f6b18"/></linearGradient>
+            <linearGradient id="gPipe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd76a"/><stop offset=".6" stop-color="#c9922d"/><stop offset="1" stop-color="#7a5612"/></linearGradient>
+            <linearGradient id="gPadTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d717b"/><stop offset="1" stop-color="#4d515a"/></linearGradient>
+            <radialGradient id="gWheel"><stop offset="0" stop-color="#ff7a5c"/><stop offset=".7" stop-color="#c0392b"/><stop offset="1" stop-color="#6f1b12"/></radialGradient>
+            <radialGradient id="gGlow"><stop offset="0" stop-color="#ffd27a" stop-opacity=".9"/><stop offset="1" stop-color="#ff7a2a" stop-opacity="0"/></radialGradient>
+            <filter id="fBlur" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+            <clipPath id="tankWin"><rect x="273" y="106" width="22" height="70" rx="4"/></clipPath>
+          </defs>
+
+          <!-- 4. kademe: alev bacası -->
+          <g class="t4">
+            <ellipse cx="344" cy="190" rx="14" ry="4" fill="#000" opacity=".35" filter="url(#fBlur)"/>
+            <rect x="339" y="58" width="10" height="130" fill="url(#gSteel)"/>
+            <rect x="336" y="56" width="16" height="6" rx="2" fill="#2a2b30"/>
+            <path d="M341 120h6M341 90h6" stroke="#c0392b" stroke-width="4"/>
+            <circle cx="344" cy="44" r="18" fill="url(#gGlow)" class="glow"/>
+            <path class="flame" d="M344 24c6 9 9 15 6 24-2 6-10 7-12 1-3-7 2-12 6-25Z" fill="#ff9a2a"/>
+            <path class="flame f2" d="M344 34c3 5 5 9 3 13-1 4-6 4-7 0-1-4 1-7 4-13Z" fill="#ffe08a"/>
+          </g>
+
+          <!-- 3. kademe: sondaj kulesi (arkada) -->
+          <g class="t3">
+            <ellipse cx="238" cy="190" rx="34" ry="5" fill="#000" opacity=".3" filter="url(#fBlur)"/>
+            <path d="M216 188 233 34M260 188 243 34" stroke="#1f2025" stroke-width="5" fill="none"/>
+            <path d="M220 160 255 130M256 160 221 130M223 130 252 100M253 130 224 100M226 100 249 72M250 100 227 72M229 72 246 48M247 72 230 48" stroke="#2d2f35" stroke-width="2.4" fill="none"/>
+            <path d="M219 160h38M222 130h32M225 100h26M228 72h20" stroke="#3a3d44" stroke-width="3"/>
+            <rect x="227" y="28" width="22" height="9" rx="2" fill="url(#gRed)"/>
+            <circle cx="238" cy="24" r="3.5" fill="#ff3b30" class="blink"/>
+            <rect x="231" y="138" width="14" height="10" rx="2" fill="url(#gRed)"/>
+          </g>
+
+          <!-- zemin platformu (3D) -->
+          <ellipse cx="170" cy="196" rx="150" ry="7" fill="#000" opacity=".35" filter="url(#fBlur)"/>
+          <polygon points="18,186 312,186 328,176 34,176" fill="url(#gPadTop)"/>
+          <rect x="18" y="186" width="294" height="10" fill="#33363c"/>
+          <polygon points="312,186 328,176 328,186 312,196" fill="#24262b"/>
+          <path d="M40 181h270" stroke="#7c808a" stroke-width="1" opacity=".5"/>
+
+          <!-- 2. kademe: ikinci tank -->
+          <g class="t2">
+            <rect x="306" y="120" width="30" height="62" fill="url(#gTank2)"/>
+            <ellipse cx="321" cy="120" rx="15" ry="4" fill="#8e939b"/>
+            <ellipse cx="321" cy="182" rx="15" ry="4" fill="#2f3237"/>
+            <path d="M306 140h30M306 160h30" stroke="#2f3237" stroke-width="1.5" opacity=".7"/>
+            <path d="M300 170h8" stroke="url(#gPipe)" stroke-width="5"/>
+            <rect x="196" y="176" width="16" height="10" rx="2" fill="#3a3d44"/>
+            <path d="M206 176v-6h20" stroke="url(#gPipe)" stroke-width="3" fill="none"/>
+          </g>
+
+          <!-- motor + krank (3D kutu) -->
+          <g class="crank-group">
+            <polygon points="28,153 66,153 73,147 35,147" fill="#5d616b"/>
+            <rect x="28" y="153" width="38" height="33" rx="2" fill="#3a3d44"/>
+            <polygon points="66,153 73,147 73,180 66,186" fill="#24262b"/>
+            <path d="M32 160h30M32 166h30M32 172h30" stroke="#2a2c31" stroke-width="2"/>
+            <circle cx="50" cy="168" r="13" fill="url(#gWheel)"/>
+            <circle cx="50" cy="168" r="4" fill="#2a2b30"/>
+            <g class="crank"><rect x="45" y="138" width="10" height="36" rx="3" fill="#8e2a20"/><rect x="47" y="139" width="3" height="34" fill="#c84a3a" opacity=".6"/><circle cx="50" cy="143" r="5" fill="#2a2b30"/></g>
+          </g>
+
+          <!-- A çerçeve (arka + ön bacak) -->
+          <path d="M102 186 122 94 142 186" stroke="#1a1b1f" stroke-width="7" fill="none" stroke-linejoin="round"/>
+          <path d="M90 188 120 92 150 188" stroke="url(#gSteel)" stroke-width="9" fill="none" stroke-linejoin="round"/>
+          <path d="M103 150h34M108 128h24" stroke="#2c2e34" stroke-width="5"/>
+
+          <!-- sallanan kol -->
+          <g class="beam">
+            <rect x="34" y="80" width="24" height="24" rx="3" fill="#25262b"/>
+            <rect x="36" y="81" width="20" height="4" fill="#4a4d55"/>
+            <rect x="40" y="83" width="152" height="14" rx="3" fill="url(#gBeam)"/>
+            <rect x="42" y="84" width="148" height="3" fill="#7b7f89" opacity=".55"/>
+            <path d="M184 70q26 20 0 44l-8-5q15-17 0-34Z" fill="url(#gRed)"/>
+            <path d="M180 76q17 14 0 32" stroke="#ff8c76" stroke-width="2" fill="none" opacity=".7"/>
+            <circle cx="120" cy="90" r="8" fill="url(#gGold)"/>
+            <circle cx="120" cy="90" r="3" fill="#6b4f10"/>
+          </g>
+
+          <!-- kuyu başı -->
+          <rect x="186" y="110" width="5" height="76" fill="url(#gGold)" class="rod"/>
+          <rect x="172" y="174" width="34" height="12" rx="2" fill="url(#gGold)"/>
+          <rect x="181" y="150" width="16" height="26" rx="2" fill="#4a4d55"/>
+          <rect x="183" y="151" width="4" height="24" fill="#7b7f89" opacity=".6"/>
+          <circle cx="176" cy="160" r="5" fill="url(#gWheel)"/>
+          <circle cx="202" cy="160" r="5" fill="url(#gWheel)"/>
+          <path d="M181 160h-5M197 160h5" stroke="#2a2b30" stroke-width="3"/>
+
+          <!-- boru + ana tank -->
+          <path d="M204 171H262" stroke="#5c430d" stroke-width="7"/>
+          <path d="M204 170H262" stroke="url(#gPipe)" stroke-width="5"/>
+          <ellipse cx="284" cy="190" rx="26" ry="5" fill="#000" opacity=".35" filter="url(#fBlur)"/>
+          <rect x="262" y="96" width="44" height="88" fill="url(#gTank)"/>
+          <ellipse cx="284" cy="96" rx="22" ry="6" fill="#c9ccd2"/>
+          <ellipse cx="284" cy="96" rx="16" ry="3.5" fill="#9ea3ab"/>
+          <ellipse cx="284" cy="184" rx="22" ry="5" fill="#3a3d43"/>
+          <rect x="273" y="106" width="22" height="70" rx="4" fill="#15171a"/>
+          <g clip-path="url(#tankWin)"><rect x="273" y="176" width="22" height="0" fill="#0b0b0c" id="tankFill"/></g>
+          <rect x="273" y="106" width="22" height="70" rx="4" fill="none" stroke="#5c6068" stroke-width="2"/>
+          <path d="M296 120h4M296 140h4M296 160h4" stroke="#2a2c31" stroke-width="2"/>
+          <path d="M303 100v80M309 100v80" stroke="#2a2c31" stroke-width="1.6" class="t2"/>
+        </svg>
+        <div class="sell-fx hidden" id="sellFx">
+          <div class="truck-wrap" id="truck">
+            <svg viewBox="0 0 170 74" class="truck-svg">
+              <defs>
+                <linearGradient id="gTrk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6f8"/><stop offset=".5" stop-color="#b8bec7"/><stop offset="1" stop-color="#6c727b"/></linearGradient>
+                <clipPath id="trkBody"><rect x="52" y="10" width="106" height="40" rx="18"/></clipPath>
+              </defs>
+              <ellipse cx="90" cy="70" rx="80" ry="4" fill="#000" opacity=".35"/>
+              <rect x="52" y="10" width="106" height="40" rx="18" fill="url(#gTrk)"/>
+              <g clip-path="url(#trkBody)"><rect x="52" y="50" width="106" height="0" fill="#1a1308" id="truckFill"/></g>
+              <rect x="52" y="10" width="106" height="40" rx="18" fill="none" stroke="#5a606a" stroke-width="2"/>
+              <path d="M70 12v36M140 12v36" stroke="#7b818b" stroke-width="2"/>
+              <text x="105" y="35" text-anchor="middle" font-size="11" font-weight="900" fill="#c0392b" font-family="Rubik, sans-serif">OIL PUMP</text>
+              <rect x="44" y="48" width="122" height="8" rx="2" fill="#2a2b30"/>
+              <path d="M8 56V30q0-10 10-12h22q8 0 10 8l4 30Z" fill="#d23c2c"/>
+              <path d="M14 30q2-7 8-7h14q4 0 6 6l2 9H14Z" fill="#9fd6ff"/>
+              <rect x="4" y="50" width="10" height="6" rx="2" fill="#ffd76a"/>
+              <g class="wheel"><circle cx="26" cy="60" r="9" fill="#1b1b1f"/><circle cx="26" cy="60" r="4" fill="#8a8f98"/><path d="M26 52v16M18 60h16" stroke="#3a3b40" stroke-width="2"/></g>
+              <g class="wheel"><circle cx="98" cy="60" r="9" fill="#1b1b1f"/><circle cx="98" cy="60" r="4" fill="#8a8f98"/><path d="M98 52v16M90 60h16" stroke="#3a3b40" stroke-width="2"/></g>
+              <g class="wheel"><circle cx="140" cy="60" r="9" fill="#1b1b1f"/><circle cx="140" cy="60" r="4" fill="#8a8f98"/><path d="M140 52v16M132 60h16" stroke="#3a3b40" stroke-width="2"/></g>
+              <rect x="158" y="34" width="10" height="6" rx="2" fill="#555a63"/>
+            </svg>
+            <div class="hose"></div>
+          </div>
+          <div class="load-label" id="loadLabel">+0 petrol</div>
+        </div>
+        <div class="well"><i></i><i></i><i></i></div>
+        <div class="stats">
+          <div class="stat"><svg class="ico" viewBox="0 0 32 32"><path d="M16 2C11 9 5 14 5 20a11 11 0 0 0 22 0c0-6-6-11-11-18Z" fill="#e2533f" stroke="#fff" stroke-width="2.5"/><path d="m17 11-6 10h5l-1 6 6-10h-5Z" fill="#fff"/></svg><div><small>GÜÇ</small><b id="power">0</b></div></div>
+          <div class="stat"><svg class="ico" viewBox="0 0 32 32"><rect x="6" y="3" width="20" height="26" rx="2" fill="#fff"/><path d="M4 6h24M4 26h24" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M16 10c-2.5 3.6-4 5.6-4 7.6a4 4 0 0 0 8 0c0-2-1.5-4-4-7.6Z" fill="#e6a52a"/></svg><div><small>PETROL</small><b id="oil">0</b></div></div>
+        </div>
+        <div class="badge-row">
+          <span class="badge" id="levelBadge">Seviye 1</span>
+          <span class="badge" id="rateBadge">0 / saat</span>
+          <span class="badge turbo hidden" id="turboBadge">TURBO</span>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="row">
+          <button class="btn orange" id="btnSell"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M5 3h14v3h-1v12h1v3H5v-3h1V6H5Zm7 5c-1.5 2.2-2.5 3.6-2.5 5a2.5 2.5 0 0 0 5 0c0-1.4-1-2.8-2.5-5Z"/></svg>SAT</button>
+          <button class="btn teal" id="btnUpgrade"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 3 4 12h5v9h6v-9h5Z"/></svg>YÜKSELT</button>
+        </div>
+        <button class="btn green big" id="btnStart">BAŞLAT</button>
+      </div>
+    </section>
+
+    <!-- MAĞAZA -->
+    <section class="view scroll" id="v-shop">
+      <h1>MAĞAZA</h1>
+      <div class="card gift hidden" id="firstBonus">
+        <span class="gift-ico">🎁</span>
+        <div><b>İlk alışverişine bonus</b><span id="firstBonusPct">+%30</span></div>
+      </div>
+      <div class="products" id="products"></div>
+      <p class="note">Ödemeler Telegram Stars ile yapılır. Satın alınan güç ve paralar yalnızca oyun içinde kullanılır; nakde çevrilemez.</p>
+    </section>
+
+    <!-- GÖREVLER -->
+    <section class="view scroll" id="v-tasks">
+      <h1>GÖREVLER</h1>
+      <div class="card daily" id="daily"></div>
+      <div id="taskList"></div>
+    </section>
+
+    <!-- ARKADAŞLAR -->
+    <section class="view scroll" id="v-friends">
+      <h1>EKİBİN</h1>
+      <div class="card invite">
+        <div class="invite-top">
+          <div><span class="big-num" id="refPower">+200</span> <span class="unit">Güç</span><p>Üretime başlayan her arkadaş için</p></div>
+          <svg viewBox="0 0 64 44" class="truck"><rect x="4" y="8" width="34" height="20" rx="10" fill="#f4c35b"/><rect x="18" y="3" width="8" height="6" rx="2" fill="#f4c35b"/><path d="M40 14h12l8 10v8H40Z" fill="#f4c35b"/><rect x="2" y="28" width="58" height="6" rx="2" fill="#f4c35b"/><circle cx="14" cy="36" r="6" fill="#f4c35b" stroke="#3a2a20" stroke-width="3"/><circle cx="48" cy="36" r="6" fill="#f4c35b" stroke="#3a2a20" stroke-width="3"/></svg>
+        </div>
+        <label>Davet bağlantın</label>
+        <div class="link-row"><input id="refLink" readonly><button class="btn gold sq" id="btnCopy" aria-label="Kopyala"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 8h11v13H8Zm-4-5h11v3H7v11H4Z"/></svg></button></div>
+        <button class="btn gold" id="btnInvite"><svg viewBox="0 0 24 24"><path fill="currentColor" d="m2 11 19-8-3 18-6-5-3 4v-6l9-8-11 7Z"/></svg>DAVET ET</button>
+      </div>
+      <div class="card blue">
+        <div class="tri">
+          <div><b id="fTotal">0</b><small>Davet</small></div>
+          <div><b id="fActive">0</b><small>Aktif</small></div>
+          <div><b id="fEarned">0</b><small>Kazanılan para</small></div>
+        </div>
+        <p class="muted" id="refShareText">Arkadaşların petrol sattıkça sen de %10 oyun parası kazanırsın. Bu pay onların kazancından kesilmez.</p>
+      </div>
+      <div class="list" id="friendList"></div>
+    </section>
+
+    <!-- ÇEKİM -->
+    <section class="view scroll wallet-view" id="v-withdraw">
+      <div class="wl-head">
+        <div class="wl-bal"><span>$</span><b id="rwBalance">0,00</b></div>
+        <small>Çekilebilir bakiye · USD</small>
+        <small>1 Coin = 1 Dolar</small>
+        <small>Oyun / satın alınan Coin: <b id="rwCoinAmount">0,00</b></small>
+      </div>
+      <div class="wl-actions">
+        <button data-act="withdraw"><i><svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M7 17 17 7m0 0H9m8 0v8"/></svg></i><span>Çek</span></button>
+        <button data-act="earn"><i><svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 2h12v2h4v4a5 5 0 0 1-5 5 6 6 0 0 1-4 3v3h4v3H7v-3h4v-3a6 6 0 0 1-4-3 5 5 0 0 1-5-5V4h4Zm0 4H4v2a3 3 0 0 0 2 3Zm12 0v5a3 3 0 0 0 2-3V6Z"/></svg></i><span>Kazan</span></button>
+        <button data-act="history"><i><svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2M4 12a8 8 0 1 0 2.3-5.6M4 4v3h3"/></svg></i><span>Geçmiş</span></button>
+      </div>
+      <div id="rwBanner"></div>
+      <div class="wl-sec"><b>Hesap hareketleri</b><button id="rwAll" class="hidden">Tümü ›</button></div>
+      <div class="wl-list" id="rwBody"></div>
+    </section>
+
+    <!-- SIRALAMA -->
+    <section class="view scroll" id="v-top">
+      <h1>SIRALAMA</h1>
+      <div class="card me-rank"><span>Senin sıran</span><b id="myRank">-</b></div>
+      <div class="list" id="topList"></div>
+    </section>
+  </main>
+
+  <nav class="tabs">
+    <button data-v="withdraw"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M3 6a3 3 0 0 1 3-3h11v3H6v1h15v12a2 2 0 0 1-2 2H6a3 3 0 0 1-3-3Zm14 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"/></svg><span>ÇEKİM</span></button>
+    <button data-v="tasks"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M9 2h6v3H9ZM5 4h3v3h8V4h3v18H5Zm5 12.5-2.5-2.5-1.4 1.4 3.9 3.9 7-7-1.4-1.4Z"/></svg><span>GÖREVLER</span></button>
+    <button data-v="pump" class="on"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M2 20h20v2H2Zm3-2 4-12h2l4 12h-2l-1-3H8l-1 3Zm3.7-5h2.6L10 9ZM13 5l8-3 1 2-7 3v4h-2Z"/></svg><span>PETROL</span></button>
+    <button data-v="friends"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M9 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8c0-3.3 3.1-6 7-6s7 2.7 7 6v1H2Zm17-12h2v3h3v2h-3v3h-2v-3h-3v-2h3Z"/></svg><span>ARKADAŞLAR</span></button>
+    <button data-v="shop"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M3 4h18l1 5a3 3 0 0 1-5 2 3 3 0 0 1-5 0 3 3 0 0 1-5 0 3 3 0 0 1-5-2Zm1 9h16v8h-6v-5h-4v5H4Z"/></svg><span>MAĞAZA</span></button>
+  </nav>
+
+  <canvas id="confetti" class="confetti"></canvas>
+  <div class="celebrate hidden" id="celebrate">
+    <div class="cel-rays"></div>
+    <div class="cel-card">
+      <div class="cel-ico">💰</div>
+      <small>SATIŞ TAMAMLANDI</small>
+      <b id="celAmt">+0</b>
+      <span id="celSub">oyun parası</span>
+    </div>
+  </div>
+  <div class="modal hidden" id="modal"><div class="sheet" id="sheet"></div></div>
+  <div class="toast hidden" id="toast"></div>
+  <div class="loader" id="loader"><div class="drop"></div><b>Oil Pump</b><span id="loadMsg">Yükleniyor…</span></div>
+</div>
+<script src="app.js?v=6"></script>
+</body>
+</html>

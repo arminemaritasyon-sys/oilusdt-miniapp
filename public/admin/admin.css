@@ -1,0 +1,55 @@
+:root { --bg: #f5f1ec; --card: #fff; --line: #e6ddd3; --ink: #2a1d14; --muted: #7a6a5c; --acc: #c9822d; --bad: #c0392b; }
+@media (prefers-color-scheme: dark) { :root { --bg: #17130f; --card: #221c17; --line: #3a2f27; --ink: #f2e8de; --muted: #a8968a; } }
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); display: flex; min-height: 100vh; }
+a { color: var(--acc); }
+.side { width: 210px; flex-shrink: 0; background: #2a1d14; padding: 18px 10px; display: flex; flex-direction: column; gap: 2px; position: sticky; top: 0; height: 100vh; }
+.side .brand { color: #f4c35b; font-weight: 800; font-size: 19px; padding: 4px 12px 16px; }
+.side a { color: #e8d8c8; text-decoration: none; padding: 9px 12px; border-radius: 9px; }
+.side a.on, .side a:hover { background: #4a3626; color: #fff; }
+.side .out { margin-top: auto; color: #c9a; }
+main { flex: 1; min-width: 0; padding: 24px 28px 60px; }
+h1 { margin: 0 0 18px; font-size: 26px; }
+h1 small, h2 small { font-size: 14px; color: var(--muted); font-weight: 500; }
+h2 { margin: 28px 0 12px; font-size: 19px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.stat small { display: block; color: var(--muted); font-size: 13px; }
+.stat b { font-size: 22px; }
+table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 14px; }
+th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { background: rgba(201,130,45,.1); font-weight: 700; }
+tr.ban td { opacity: .5; }
+td small { color: var(--muted); }
+.form { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; align-items: end; max-width: 980px; }
+label { display: flex; flex-direction: column; gap: 5px; font-weight: 600; font-size: 13.5px; }
+label.chk { flex-direction: row; align-items: center; gap: 8px; }
+input, select, textarea { font: inherit; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); color: var(--ink); }
+textarea { grid-column: 1 / -1; }
+.form label:has(textarea) { grid-column: 1 / -1; }
+button { font: inherit; font-weight: 700; padding: 10px 18px; border: 0; border-radius: 10px; background: var(--acc); color: #fff; cursor: pointer; }
+button.sm { padding: 5px 10px; font-size: 13px; background: var(--bad); }
+.bar { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+.alert { background: #e8f6e2; color: #245a1a; border: 1px solid #b8e0a8; padding: 10px 14px; border-radius: 10px; margin-bottom: 16px; }
+.alert.err { background: #fde8e4; color: #8a2216; border-color: #f2b8ad; }
+.hint { color: var(--muted); font-size: 13.5px; }
+.bad { color: var(--bad); }
+.login { max-width: 340px; margin: 14vh auto; display: grid; gap: 12px; }
+.login h1 { font-size: 22px; text-align: center; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.tab { padding: 7px 12px; border-radius: 9px; background: var(--card); border: 1px solid var(--line); text-decoration: none; color: var(--ink); font-weight: 600; font-size: 14px; }
+.tab.on { background: var(--acc); color: #fff; border-color: var(--acc); }
+.mono { font-family: ui-monospace, Consolas, monospace; word-break: break-all; }
+button.ok { padding: 5px 10px; font-size: 13px; background: #3a8b3d; }
+.dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: middle; }
+.form label.wide { grid-column: 1 / -1; }
+input[type=color] { padding: 2px; height: 40px; }
+body.is-login { display: block; }
+.hidden { display: none !important; }
+@media (max-width: 760px) {
+  body { flex-direction: column; }
+  .side { width: auto; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 10px; }
+  .side .brand { width: 100%; padding-bottom: 6px; }
+  .side .out { margin-top: 0; }
+  main { padding: 16px; overflow-x: auto; }
+}

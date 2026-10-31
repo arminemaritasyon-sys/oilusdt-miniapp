@@ -1,0 +1,7 @@
+{
+  "name": "oilpump",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "24.x" },
+  "dependencies": { "pg": "8.13.1" }
+}
