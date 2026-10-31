@@ -149,7 +149,12 @@ export default async function handler(req, res) {
       }
 
       await G.saveUser(c, u);
-      return { ok: true, state: G.publicState(s, u), me: { id: u.id, name: u.first_name }, ...extra };
+      const state = G.publicState(s, u);
+      // Çekilebilir bakiye (USD) her yanıtta güncel haliyle gönderilir: sol üstteki bakiye ve Çekim ekranı
+      // aynı değeri gösterir; çekim, satış, iade gibi hareketler iki yerde birlikte görünür.
+      const bal = (await c.query('SELECT reward_usd FROM users WHERE id = $1', [u.id])).rows[0];
+      state.balance = Math.round((Number(bal?.reward_usd) || 0) * 100) / 100;
+      return { ok: true, state, me: { id: u.id, name: u.first_name }, ...extra };
     });
     if (out.announce) {
       await notifyAdminsSubmitted(out.announce.row, tgUser, out.announce.title);

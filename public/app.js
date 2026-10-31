@@ -196,7 +196,7 @@
   /* ---------- Petrol ekranı ---------- */
   function render() {
     if (!S) return;
-    $('#coins').textContent = fmt(S.coins, S.coins < 1000 ? 2 : 0);
+    $('#coins').textContent = '$' + fmt(S.balance ?? 0, 2);
     $('#power').textContent = fmt(S.power);
     $('#levelBadge').textContent = 'Seviye ' + S.level;
     $('#rateBadge').textContent = fmt(S.rate_hour, S.rate_hour < 10 ? 2 : 1) + ' petrol / saat';
@@ -744,6 +744,7 @@
   function renderRewards() {
     const r = RW;
     $('#rwBalance').textContent = fmt(r.balance, 2);
+    if (S && Number.isFinite(Number(r.balance))) { S.balance = Number(r.balance); render(); }
     $('#rwCoinAmount').textContent = fmt(S.coins, 2);
     const w = r.week;
     $('#rwBanner').innerHTML = `<button class="wl-banner" id="rwContest">
