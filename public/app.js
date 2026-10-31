@@ -888,7 +888,7 @@
         <div class="account-delete-warning">
           <b>Bu işlem geri alınamaz.</b>
           <p>Petrolün, pompa seviyen, gücün, görevlerin ve mevcut Coin/çekilebilir bakiyen sıfırlanır. Satın aldığın paketler yeni hesabına geri verilmez.</p>
-          <p>Ödeme ve çekim kayıtları muhasebe ve iade işlemleri için saklanabilir. Bekleyen çekim veya ödeme işlemi varken hesabını silemezsin.</p>
+          <p>Yalnızca <b>Beklemede</b> durumundaki çekim talebi silmeyi engeller. <b>Onaylandı</b> ve <b>Ödendi</b> çekimlerinde hesabını silebilirsin. Kripto siparişleri engel olmaz; geçmiş ödeme kayıtları ve varsa henüz yapılmamış ödeme yükümlülükleri korunur.</p>
           <p>Tekrar giriş yaptığında oyuna başlangıç seviyesinden devam edebilirsin.</p>
         </div>
         <label class="account-delete-label" for="accountDeleteWord">Onaylamak için <b>HESABIMI SİL</b> yaz:</label>
