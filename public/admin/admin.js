@@ -109,7 +109,7 @@
       const j = await api('user', { id });
       const u = j.user;
       const cards = { 'Ödül bakiyesi': '$' + nf(u.reward_usd, 2), 'Toplam petrol': nf(u.oil_total, 2), 'Harcanan Stars': nf(u.stars_spent) + ' ⭐', 'Davet': `${j.refs.total} (${j.refs.active} aktif)`,
-        'Davet kazancı (oyun parası)': nf(u.ref_earned, 2), 'Son görülme': dt(u.last_seen), 'Kayıt': dt(u.created_at) };
+        'Petrol referans kazancı': '$' + nf(u.ref_earned, 2), 'Son görülme': dt(u.last_seen), 'Kayıt': dt(u.created_at) };
       page(`<h1>${esc(u.first_name)} <small>${u.id}${u.username ? ' · @' + esc(u.username) : ''}</small></h1>
         <div class="grid">${Object.entries(cards).map(([k, v]) => `<div class="card stat"><small>${k}</small><b>${v}</b></div>`).join('')}</div>
         <h2>Düzenle</h2><form class="card form" id="uf"><input type="hidden" name="id" value="${u.id}">
@@ -133,7 +133,7 @@
       const j = await api('products');
       const rows = j.products.map((p) => `<tr><td>${p.sort}</td><td>${esc(p.title)}</td><td>${esc(p.description)}</td><td>${p.type}</td><td>${nf(p.amount)}</td><td>${p.hours}</td><td>${p.stars} ⭐</td><td>${p.usd > 0 ? nf(p.usd, 2) + ' $' : '-'}</td><td>${p.active ? 'Aktif' : 'Pasif'}</td><td><a href="#products/${p.id}">Düzenle</a></td></tr>`).join('');
       const e = j.products.find((p) => String(p.id) === editId) || { id: 0, title: '', description: '', stars: 50, usd: 1, type: 'power', amount: 0, hours: 0, sort: 0, active: 1 };
-      page(`<h1>Ürünler <small>Telegram Stars veya kripto cüzdanı ile satılan oyun içi paketler. Güç paketleri sırayla açılır.</small></h1>
+      page(`<h1>Ürünler <small>Telegram Stars veya kripto cüzdanı ile satılan oyun içi paketler. Güç paketlerinin tamamı doğrudan satın alınabilir.</small></h1>
         <table><tr><th>Sıra</th><th>Başlık</th><th>Açıklama</th><th>Tür</th><th>Miktar</th><th>Saat</th><th>Stars</th><th>Kripto</th><th>Durum</th><th></th></tr>${rows}</table>
         <h2>${e.id ? 'Ürünü düzenle' : 'Yeni ürün'}</h2><form class="card form" id="pf"><input type="hidden" name="id" value="${e.id}">
         ${field('Başlık', 'title', e.title, 'text', 'required')}${field('Açıklama', 'description', e.description)}
@@ -310,6 +310,9 @@
       page(`<h1>Çekimler <small>Ödül bakiyesinden çekim talepleri</small></h1>
         <p class="hint">Talep oluşturulunca tutar oyuncunun ödül bakiyesinden düşülür. <b>Reddet</b> tutarı geri ekler. Ödemeyi yaptıktan sonra <b>Ödendi</b> deyip TX kodunu girin; oyuncuya bottan mesaj gider.
         ${j.api ? 'Otomatik ödeme API\'si açık (PAYOUT_API_KEY tanımlı).' : 'Otomatik ödeme altyapınızı bağlamak için Vercel\'e <code>PAYOUT_API_KEY</code> ekleyin.'}</p>
+        <h2>Telegram çekim bildirimleri</h2>
+        <form class="card form" id="wd-group-form">${field('Grup (@grup veya -100... ID)', 'chat', j.groupChat||'')}<button>Kaydet</button></form>
+        <p class="hint">Botu gruba ekleyin. Onay ve gerçek ödeme ayrı durum mesajları gönderir.</p>
         <div class="tabs">${tabs}</div>
         <table><tr><th>#</th><th>Tarih</th><th>Oyuncu</th><th>Gönderilecek</th><th>Yöntem</th><th>Adres</th><th>TX / Not</th><th></th></tr>${rows}</table>
         <h2>Çekim yöntemleri</h2><table><tr><th>Sıra</th><th>Coin</th><th>Ağ</th><th>En az</th><th>Ağ ücreti</th><th>Durum</th><th></th></tr>${nets}</table>
@@ -318,6 +321,7 @@
         ${field('En az çekim ($)', 'min_usd', e.min_usd, 'number', 'min="0"')}${field('Ağ ücreti ($, tutardan düşülür)', 'fee_usd', e.fee_usd, 'number', 'min="0"')}
         <label>Renk<input name="color" type="color" value="${esc(e.color)}"></label>${field('Sıra', 'sort', e.sort, 'number')}${check('Açık', 'enabled', e.enabled)}<button>Kaydet</button></form>`, j.dev);
       bindForm('#pnf', 'pnet_save', () => { location.hash = 'withdrawals/' + j.status; route(); });
+      bindForm('#wd-group-form','wd_group_save',()=>{location.hash='withdrawals/'+j.status;route();});
       const act = async (action, data, ask) => { if (ask && !confirm(ask)) return; try { flash = (await api(action, data)).msg; route(); } catch (ex) { alert(ex.message); } };
       main.querySelectorAll('[data-ap]').forEach((b) => b.onclick = () => act('wd_approve', { id: b.dataset.ap }, 'Talep onaylansın mı?'));
       main.querySelectorAll('[data-paid]').forEach((b) => b.onclick = () => {

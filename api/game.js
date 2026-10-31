@@ -3,6 +3,7 @@ import { env, tg, verifyInitData, refLink, botUsername } from '../lib/tg.js';
 import * as G from '../lib/game.js';
 import { activeWallets, createWalletInvoice, submitWalletInvoice, notifyAdminsSubmitted, publicInvoice } from '../lib/wallet.js';
 import * as R from '../lib/rewards.js';
+import { notifyWithdrawalGroup } from '../lib/payout_announcements.js';
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -44,7 +45,7 @@ export default async function handler(req, res) {
           extra.earned = Math.round((await G.actSell(c, s, u)) * 1e4) / 1e4;
           break;
         case 'upgrade':
-          G.actUpgrade(s, u);
+          extra.upgrade = await G.actUpgrade(c, s, u, body.source || 'usd');
           break;
         case 'daily':
           extra.reward = G.actDaily(s, u);
@@ -79,7 +80,7 @@ export default async function handler(req, res) {
           const cnt = (await c.query('SELECT COUNT(*)::int AS total, COALESCE(SUM(started),0)::int AS active FROM users WHERE ref_by = $1', [u.id])).rows[0];
           extra.friends = {
             link: await refLink(u.id), total: cnt.total, active: cnt.active,
-            earned: Math.round(u.ref_earned * 100) / 100, ref_power: s.ref_power, ref_share: s.ref_share,
+            earned: Math.round(u.ref_earned * 100) / 100, ref_power: s.ref_power, ref_share: s.ref_share, ref_rates:G.referralRates(s), ref_depth:9,
             list: list.map((f) => ({ name: f.first_name || f.username || 'Oyuncu', active: !!f.started, oil: Math.round(f.oil_total * 10) / 10 })),
           };
           break;
@@ -161,6 +162,7 @@ export default async function handler(req, res) {
       delete out.announce;
     }
     if (out.withdrawAnnounce) {
+      if(out.withdrawAnnounce.status==='approved')await notifyWithdrawalGroup(out.withdrawAnnounce.id,'approved');
       await R.notifyAdminsWithdraw(out.withdrawAnnounce, tgUser);
       delete out.withdrawAnnounce;
     }

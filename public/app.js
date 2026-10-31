@@ -341,24 +341,30 @@
 
   $('#btnUpgrade').onclick = () => {
     if (!S || S.upgrade_cost === null) return;
-    const canPay = S.coins >= S.upgrade_cost;
+    const cost = S.upgrade_cost;
+    const usdBalance = Number(S.balance) || 0;
+    const coinBalance = Number(S.coins) || 0;
     sheet(`
       <h2>Pompayı Yükselt</h2>
       <div class="rows">
         <div><span>Seviye</span><b>${S.level} → ${S.level + 1}</b></div>
         <div><span>Üretim artışı</span><b class="up">+%${fmt((S.next_mult - 1) * 100, 1)}</b></div>
-        <div><span>Maliyet</span><b>${fmt(S.upgrade_cost)} para</b></div>
-        <div><span>Bakiyen</span><b>${fmt(S.coins, 2)} para</b></div>
+        <div><span>Yükseltme bedeli</span><b>${money(cost)}</b></div>
+        <div><span>Çekilebilir USD</span><b>${money(usdBalance)}</b></div>
+        <div><span>Oyun Coin</span><b>${fmt(coinBalance, 2)} Coin</b></div>
       </div>
       <div class="btns">
-        <button class="btn teal" id="doUpgrade" ${canPay ? '' : 'disabled'}>${canPay ? 'YÜKSELT' : 'YETERSİZ PARA'}</button>
+        <button class="btn teal" id="doUpgrade" ${usdBalance >= cost ? '' : 'disabled'}>USD BAKİYE İLE YÜKSELT</button>
+        <button class="btn" id="doUpgradeCoins" ${coinBalance >= cost ? '' : 'disabled'}>OYUN COIN İLE YÜKSELT</button>
         <button class="btn done" data-close>Kapat</button>
       </div>`);
-    $('#doUpgrade').onclick = () => run(async () => {
-      await api('upgrade');
+    const upgrade = source => run(async () => {
+      await api('upgrade', { source });
       closeSheet();
       toast('Pompa seviye ' + S.level + ' oldu!', false, 'upgrade');
     });
+    $('#doUpgrade').onclick = () => upgrade('usd');
+    $('#doUpgradeCoins').onclick = () => upgrade('coins');
   };
 
   /* ---------- Sekmeler ---------- */
@@ -411,7 +417,7 @@
     const nextStep = ladder.find((p) => !p.locked && !p.owned)?.step;
 
     if (ladder.length) {
-      box.append(el('h2', 'shop-sec', 'Güç Paketleri <span>Her paket bir sonrakinin kilidini açar</span>'));
+      box.append(el('h2', 'shop-sec', 'Güç Paketleri <span>İstediğin paketi doğrudan seçebilirsin</span>'));
       const list = el('div', 'ladder');
       for (const p of ladder) {
         const gain = p.amount * (S?.first_buy ? 1 + S.first_bonus : 1);
@@ -674,7 +680,7 @@
       $('#fTotal').textContent = fmt(f.total);
       $('#fActive').textContent = fmt(f.active);
       $('#fEarned').textContent = short(f.earned);
-      $('#refShareText').textContent = `Arkadaşların petrol sattıkça sen de %${fmt(f.ref_share * 100)} oyun parası kazanırsın. Bu pay onların kazancından kesilmez.`;
+      $('#refShareText').textContent = '9 seviyeli petrol referans kazancı: '+(f.ref_rates||[]).map((r,i)=>(i+1)+'. seviye %'+fmt(r*100,2)).join(' · ')+'. Bu paylar arkadaşlarının kazancından kesilmez.';
       const list = $('#friendList');
       list.innerHTML = '';
       if (!f.list.length) list.append(el('div', 'empty', 'Henüz davet ettiğin kimse yok.'));

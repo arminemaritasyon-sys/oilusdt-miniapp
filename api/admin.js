@@ -4,6 +4,7 @@ import { env, tg, webappUrl, webappKeyboard, safeEqual, botUsername } from '../l
 import * as G from '../lib/game.js';
 import { approveWalletInvoice, rejectWalletInvoice } from '../lib/wallet.js';
 import * as R from '../lib/rewards.js';
+import { notifyWithdrawalGroup } from '../lib/payout_announcements.js';
 
 const TOKEN_TTL = 12 * 3600;
 const sign = (exp) => crypto.createHmac('sha256', env.adminPassword + '|' + env.secret).update(String(exp)).digest('hex');
@@ -32,6 +33,7 @@ export default async function handler(req, res) {
     if (!validToken(auth)) return res.status(401).json({ ok: false, error: 'Oturum süresi doldu.', relogin: true });
 
     const out = await run(b, req);
+    if(b.action==='wd_approve'||b.action==='wd_paid')out.group_notification=await notifyWithdrawalGroup(Number(b.id),b.action==='wd_approve'?'approved':'paid');
     return res.json({ ok: true, dev: env.dev, ...out });
   } catch (e) {
     console.error('[admin]', e);
@@ -260,7 +262,15 @@ async function run(b, req) {
           WHERE w.status = $1 ORDER BY w.id DESC LIMIT 200`, [st]),
         networks: await query('SELECT * FROM payout_networks ORDER BY sort, id'),
         api: !!process.env.PAYOUT_API_KEY,
+        groupChat:(await query("SELECT v FROM settings WHERE k='payout_group_chat'"))[0]?.v||process.env.PAYOUT_GROUP_CHAT_ID||'',
       };
+    }
+    case 'wd_group_save': {
+      let chat=String(b.chat||'').trim().replace(/^https?:\/\/t\.me\//i,'@');
+      if(chat.includes('/'))chat=chat.split('/')[0];
+      if(chat&&!/^@\w{5,32}$/.test(chat)&&!/^-?\d{5,20}$/.test(chat))throw Error('Grup @kullanıcıadı veya -100... biçiminde olmalı.');
+      await query("INSERT INTO settings(k,v) VALUES('payout_group_chat',$1) ON CONFLICT (k) DO UPDATE SET v=EXCLUDED.v",[chat]);
+      return {msg:'Grup ayarı kaydedildi.'};
     }
     case 'wd_approve':
       return { msg: await tx((c) => R.approveWithdraw(c, Number(b.id))) };
