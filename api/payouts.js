@@ -5,6 +5,7 @@
 import { tx, query } from '../lib/db.js';
 import { safeEqual } from '../lib/tg.js';
 import * as R from '../lib/rewards.js';
+import { notifyWithdrawalGroup } from '../lib/payout_announcements.js';
 
 const KEY = process.env.PAYOUT_API_KEY || '';
 
@@ -25,6 +26,7 @@ export default async function handler(req, res) {
       if (b.action === 'paid') msg = await tx((c) => R.markPaid(c, Number(b.id), b.tx_hash, req));
       else if (b.action === 'reject') msg = await tx((c) => R.rejectWithdraw(c, Number(b.id), b.note, req));
       else return res.status(400).json({ ok: false, error: "action 'paid' ya da 'reject' olmalı." });
+      if(b.action==='paid')await notifyWithdrawalGroup(Number(b.id),'paid');
       return res.json({ ok: true, msg });
     }
     return res.status(405).json({ ok: false, error: 'GET ya da POST' });

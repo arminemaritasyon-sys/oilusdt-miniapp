@@ -411,7 +411,7 @@
     const nextStep = ladder.find((p) => !p.locked && !p.owned)?.step;
 
     if (ladder.length) {
-      box.append(el('h2', 'shop-sec', 'Güç Paketleri <span>Her paket bir sonrakinin kilidini açar</span>'));
+      box.append(el('h2', 'shop-sec', 'Güç Paketleri <span>İstediğin paketi doğrudan seçebilirsin</span>'));
       const list = el('div', 'ladder');
       for (const p of ladder) {
         const gain = p.amount * (S?.first_buy ? 1 + S.first_bonus : 1);
@@ -674,7 +674,7 @@
       $('#fTotal').textContent = fmt(f.total);
       $('#fActive').textContent = fmt(f.active);
       $('#fEarned').textContent = short(f.earned);
-      $('#refShareText').textContent = `Arkadaşların petrol sattıkça sen de %${fmt(f.ref_share * 100)} oyun parası kazanırsın. Bu pay onların kazancından kesilmez.`;
+      $('#refShareText').textContent = '9 seviyeli petrol referans kazancı: '+(f.ref_rates||[]).map((r,i)=>(i+1)+'. seviye %'+fmt(r*100,2)).join(' · ')+'. Bu paylar arkadaşlarının kazancından kesilmez.';
       const list = $('#friendList');
       list.innerHTML = '';
       if (!f.list.length) list.append(el('div', 'empty', 'Henüz davet ettiğin kimse yok.'));
