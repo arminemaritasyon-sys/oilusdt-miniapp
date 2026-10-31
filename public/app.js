@@ -33,6 +33,7 @@
     try { j = await res.json(); } catch { throw new Error('Sunucuya ulaşılamadı.'); }
     if (!j.ok) throw new Error(j.error || 'Bir hata oluştu.');
     if (j.state) setState(j.state);
+    if (j.migratedCoins > 0) setTimeout(() => toast(`${fmt(j.migratedCoins, 2)} coinin çekilebilir bakiyene ($) aktarıldı!`), 800);
     return j;
   }
 
@@ -697,7 +698,7 @@
   let RW = null;
   let wdNet = null;
   const money = (n) => '$' + fmt(n, 2);
-  const kindName = { weekly: 'Haftalık ödül', referral: 'Referans ödülü', oil_referral: 'Petrol referans kazancı', oil_sale: 'Petrol satış kazancı', withdraw: 'Çekim talebi', refund: 'Çekim iadesi', admin: 'Düzeltme' };
+  const kindName = { weekly: 'Haftalık ödül', referral: 'Referans ödülü', oil_referral: 'Petrol referans kazancı', oil_sale: 'Petrol satış kazancı', coin_migration: 'Mevcut coin aktarımı', withdraw: 'Çekim talebi', refund: 'Çekim iadesi', admin: 'Düzeltme' };
   const wdStatus = { pending: 'BEKLEMEDE', approved: 'ONAYLANDI', paid: 'ÖDENDİ', rejected: 'REDDEDİLDİ' };
 
   function timeLeft(ts) {
@@ -713,7 +714,7 @@
     } catch (e) { toast(e.message, true); }
   }
 
-  const kindIco = { weekly: '🏆', referral: '👥', oil_referral: '👥', oil_sale: '🛢', withdraw: '↗', refund: '↩', admin: '⚙' };
+  const kindIco = { weekly: '🏆', referral: '👥', oil_referral: '👥', oil_sale: '🛢', coin_migration: '🪙', withdraw: '↗', refund: '↩', admin: '⚙' };
   const fmtDate = (t) => new Date(t * 1000).toLocaleString('tr-TR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
   /** Bakiye hareketleri + çekim talepleri, en yeniden eskiye. */

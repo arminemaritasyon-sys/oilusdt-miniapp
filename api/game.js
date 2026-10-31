@@ -26,6 +26,8 @@ export default async function handler(req, res) {
       let u = await G.ensureUser(c, s, tgUser, tgUser.start_param);
       if (u.banned) throw new G.GameError('Hesabın askıya alındı.');
       const extra = {};
+      const migrated = await G.migrateLegacyCoins(c, u);
+      if (migrated > 0) extra.migratedCoins = migrated;
 
       switch (action) {
         case 'init':
