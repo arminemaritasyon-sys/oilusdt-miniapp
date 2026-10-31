@@ -313,6 +313,9 @@
         <h2>Telegram çekim bildirimleri</h2>
         <form class="card form" id="wd-group-form">${field('Grup (@grup veya -100... ID)', 'chat', j.groupChat||'')}<button>Kaydet</button></form>
         <p class="hint">Botu gruba ekleyin. Onay ve gerçek ödeme ayrı durum mesajları gönderir.</p>
+        <h2>Ödenen çekimler kanalı</h2>
+        <p class="hint"><b>@oilwithdrawal</b> kanalına sadece <b>Ödendi</b> durumunda, oyuncu adı ve net gönderilen tutarla otomatik duyuru gider. Bot kanalda yönetici ve gönderi paylaşma yetkisine sahip olmalıdır.</p>
+        <button type="button" class="sm" id="wd-channel-check">Kanal yetkisini denetle</button>
         <div class="tabs">${tabs}</div>
         <table><tr><th>#</th><th>Tarih</th><th>Oyuncu</th><th>Gönderilecek</th><th>Yöntem</th><th>Adres</th><th>TX / Not</th><th></th></tr>${rows}</table>
         <h2>Çekim yöntemleri</h2><table><tr><th>Sıra</th><th>Coin</th><th>Ağ</th><th>En az</th><th>Ağ ücreti</th><th>Durum</th><th></th></tr>${nets}</table>
@@ -322,6 +325,12 @@
         <label>Renk<input name="color" type="color" value="${esc(e.color)}"></label>${field('Sıra', 'sort', e.sort, 'number')}${check('Açık', 'enabled', e.enabled)}<button>Kaydet</button></form>`, j.dev);
       bindForm('#pnf', 'pnet_save', () => { location.hash = 'withdrawals/' + j.status; route(); });
       bindForm('#wd-group-form','wd_group_save',()=>{location.hash='withdrawals/'+j.status;route();});
+      $('#wd-channel-check').onclick = async () => {
+        try {
+          const result = await api('wd_channel_check');
+          alert(result.msg);
+        } catch (error) { alert('Kanal kontrolü başarısız: ' + error.message); }
+      };
       const act = async (action, data, ask) => { if (ask && !confirm(ask)) return; try { flash = (await api(action, data)).msg; route(); } catch (ex) { alert(ex.message); } };
       main.querySelectorAll('[data-ap]').forEach((b) => b.onclick = () => act('wd_approve', { id: b.dataset.ap }, 'Talep onaylansın mı?'));
       main.querySelectorAll('[data-paid]').forEach((b) => b.onclick = () => {

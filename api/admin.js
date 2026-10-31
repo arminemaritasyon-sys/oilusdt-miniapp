@@ -4,7 +4,7 @@ import { env, tg, webappUrl, webappKeyboard, safeEqual, botUsername } from '../l
 import * as G from '../lib/game.js';
 import { approveWalletInvoice, rejectWalletInvoice } from '../lib/wallet.js';
 import * as R from '../lib/rewards.js';
-import { notifyWithdrawalGroup } from '../lib/payout_announcements.js';
+import { notifyWithdrawalGroup, PAID_ANNOUNCEMENT_CHANNEL } from '../lib/payout_announcements.js';
 
 const TOKEN_TTL = 12 * 3600;
 const sign = (exp) => crypto.createHmac('sha256', env.adminPassword + '|' + env.secret).update(String(exp)).digest('hex');
@@ -263,6 +263,23 @@ async function run(b, req) {
         networks: await query('SELECT * FROM payout_networks ORDER BY sort, id'),
         api: !!process.env.PAYOUT_API_KEY,
         groupChat:(await query("SELECT v FROM settings WHERE k='payout_group_chat'"))[0]?.v||process.env.PAYOUT_GROUP_CHAT_ID||'',
+      };
+    }
+    case 'wd_channel_check': {
+      const bot = await tg('getMe');
+      if (!bot.ok) throw new Error('Telegram bot erişimi başarısız: ' + (bot.description || 'Bilinmeyen hata'));
+      const member = await tg('getChatMember', {
+        chat_id: PAID_ANNOUNCEMENT_CHANNEL, user_id: bot.result.id
+      });
+      if (!member.ok) throw new Error('Kanala erişilemiyor: ' + (member.description || 'Bot kanala ekli olmayabilir'));
+      const m = member.result || {};
+      const permitted = m.status === 'creator' || (m.status === 'administrator' && m.can_post_messages !== false);
+      return {
+        channel: PAID_ANNOUNCEMENT_CHANNEL,
+        can_post: permitted,
+        msg: permitted
+          ? PAID_ANNOUNCEMENT_CHANNEL + ' kanalında botun gönderi yetkisi mevcut.'
+          : 'Botun @oilwithdrawal kanalında yönetici ve gönderi paylaşma yetkisi olmalı.'
       };
     }
     case 'wd_group_save': {
