@@ -544,18 +544,19 @@
         const dailyPackOil = S?.package_oil_per_kpower_hour != null &&
           Number.isFinite(oilRate) && oilRate >= 0
           ? (Number(p.amount) / 1000) * 24 * oilRate : null;
-        // USD değeri oyun sunucusunun petrol satış fiyatına bağlıdır.
-        // Paket üretimi yalnızca baz gücün tahminidir; Turbo/seviye/bonus hariç.
-        const oilSalePrice = Number(S?.oil_price);
+        // Görsel oyun değeri (çekilebilir USD bakiyesine yazılmaz).
+        // Sunucunun gerçek petrol satış fiyatıyla KARIŞTIRILMAMALIDIR.
+        const displayUsdPerOil = Number(S?.shop_game_usd_per_oil);
         const dailyPackUsd = dailyPackOil !== null &&
-          S?.oil_price != null && Number.isFinite(oilSalePrice) && oilSalePrice > 0
-          ? dailyPackOil * oilSalePrice : null;
+          S?.shop_game_usd_per_oil != null &&
+          Number.isFinite(displayUsdPerOil) && displayUsdPerOil > 0
+          ? dailyPackOil * displayUsdPerOil : null;
         const productionLabel = dailyPackOil === null
           ? 'Üretim oranı alınamadı'
           : '+' + fmt(dailyPackOil, 2) + ' petrol / 24 saat';
         const usdEstimateLabel = dailyPackUsd === null
-          ? 'USD karşılığı hesaplanamadı'
-          : '≈ ' + fmt(dailyPackUsd, 2) + ' USD · oyun içi karşılık';
+          ? 'Oyun içi USD değeri hesaplanamadı'
+          : '≈ ' + fmt(dailyPackUsd, 2) + ' oyun USD · çekilebilir değil';
         const state = p.locked ? 'locked' : p.step === nextStep ? 'next' : p.owned ? 'owned' : '';
         const badge = p.locked ? '' : p.step === nextStep ? '<span class="ribbon">ŞİMDİ AÇIK</span>' : p.owned ? `<span class="ribbon owned">✓ Alındı${p.owned > 1 ? ' ×' + p.owned : ''}</span>` : '';
         const card = el('div', 'tier ' + state, `
@@ -975,11 +976,27 @@
 
   /* ---------- Arkadaşlar ---------- */
   let refLink = '';
+  let friendsLoading = null;
+  function validRefLink(v) {
+    try {
+      const u = new URL(String(v || ''));
+      return u.protocol === 'https:' && u.hostname === 't.me'
+        && /^\/[A-Za-z0-9_]{5,32}$/.test(u.pathname)
+        && /^r\d+$/.test(u.searchParams.get('start') || '');
+    } catch { return false; }
+  }
   async function loadFriends() {
+    if (friendsLoading) return friendsLoading;
+    friendsLoading = (async () => {
+    $('#btnInvite').disabled = true;
+    $('#btnCopy').disabled = true;
     try {
       const { friends: f } = await api('friends');
+      if (!f || !validRefLink(f.link)) throw new Error('Geçerli davet bağlantısı oluşturulamadı.');
       refLink = f.link;
       $('#refLink').value = f.link;
+      $('#btnInvite').disabled = false;
+      $('#btnCopy').disabled = false;
       $('#refPower').textContent = '+' + fmt(f.ref_power);
       $('#fTotal').textContent = fmt(f.total);
       $('#fActive').textContent = fmt(f.active);
@@ -1003,17 +1020,56 @@
       for (const x of f.list) {
         list.append(el('div', 'li', `<span class="nm">${esc(x.name)}</span><span class="vl">${short(x.oil)} 🛢</span><span class="tag ${x.active ? '' : 'off'}">${x.active ? 'AKTİF' : 'BEKLİYOR'}</span>`));
       }
-    } catch (e) { toast(e.message, true); }
+    } catch (e) {
+      $('#refLink').value = '';
+      refLink = '';
+      toast(e.message, true);
+    } finally {
+      friendsLoading = null;
+    }
+    })();
+    return friendsLoading;
+  }
+
+  async function ensureInviteLink() {
+    if (!validRefLink(refLink)) await loadFriends();
+    if (!validRefLink(refLink)) throw new Error('Davet bağlantısı hazır değil. Tekrar dene.');
+    return refLink;
   }
 
   $('#btnCopy').onclick = async () => {
-    try { await navigator.clipboard.writeText(refLink); toast('Bağlantı kopyalandı'); }
-    catch { $('#refLink').select(); document.execCommand('copy'); toast('Bağlantı kopyalandı'); }
+    try {
+      const link = await ensureInviteLink();
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(link);
+          toast('Davet bağlantısı kopyalandı');
+          return;
+        } catch {}
+      }
+      const field = $('#refLink');
+      field.focus(); field.select();
+      const copied = document.execCommand?.('copy');
+      if (copied) toast('Davet bağlantısı kopyalandı');
+      else toast('Bağlantıyı seçip kopyalayabilirsin');
+    } catch (e) { toast(e.message, true); }
   };
-  $('#btnInvite').onclick = () => {
-    const text = '🛢 Benimle Oil Pump oyna! Pompanı kur, petrol çıkar, ekibini büyüt.';
-    const url = 'https://t.me/share/url?url=' + encodeURIComponent(refLink) + '&text=' + encodeURIComponent(text);
-    openLink(url);
+  $('#btnInvite').onclick = async () => {
+    try {
+      const link = await ensureInviteLink();
+      const text = 'Oil Pump oyununa katıl! Davetimle başlayıp ekibini büyüt.';
+      const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(text);
+      // Paylaşım doğrudan kullanıcının dokunmasıyla açılır; referans hazır değilse
+      // daha önce yükleme ekranında beklemek gerekir.
+      if (tg?.openTelegramLink) {
+        try { tg.openTelegramLink(shareUrl); return; } catch {}
+      }
+      if (navigator.share) {
+        try { await navigator.share({ title: 'Oil Pump Davet', text, url: link }); return; }
+        catch (e) { if (e.name === 'AbortError') return; }
+      }
+      openLink(shareUrl);
+    } catch (e) { toast(e.message, true); }
   };
 
   /* ---------- Ödül çekimi ---------- */
