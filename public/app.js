@@ -974,18 +974,47 @@
   }
 
   /* ---------- Görevler ---------- */
+  let dailyCountdownTimer = null;
   async function loadTasks() {
+    if (dailyCountdownTimer) clearInterval(dailyCountdownTimer);
+    dailyCountdownTimer = null;
     try {
       const j = await api('tasks');
       const d = j.daily;
       const daily = $('#daily');
       daily.innerHTML = `
-        <span class="d-ico">📅</span>
-        <div class="d-txt"><b>Günlük ödül</b><small>${d.streak ? d.streak + ' günlük seri · ' : ''}${d.claimed ? 'Yarın: ' : 'Bugün: '}+${fmt(d.next)} para</small></div>
-        <button class="btn small ${d.claimed ? 'done' : 'gold'}" ${d.claimed ? 'disabled' : ''}>${d.claimed ? 'ALINDI' : 'AL'}</button>`;
-      daily.querySelector('button').onclick = () => run(async () => {
+        <span class="d-ico">⚡</span>
+        <div class="d-txt">
+          <b>Günlük Güç Ödülü</b>
+          <small>${d.streak ? fmt(d.streak) + ' kez alındı · ' : 'İlk ödül · '}<span id="dailyPowerNext">+${fmt(d.next)} güç</span></small>
+          <small id="dailyCooldown" class="daily-cooldown"></small>
+        </div>
+        <button class="btn small gold" type="button">AL</button>`;
+      const dailyButton = daily.querySelector('button');
+      const updateCooldown = () => {
+        if (!daily.isConnected) return;
+        const secs = Math.max(0, Math.ceil(Number(d.next_at || 0) - serverNow()));
+        dailyButton.disabled = secs > 0;
+        dailyButton.classList.toggle('done', secs > 0);
+        dailyButton.classList.toggle('gold', secs === 0);
+        dailyButton.textContent = secs > 0 ? 'BEKLE' : 'AL';
+        const remain = daily.querySelector('#dailyCooldown');
+        if (remain) {
+          if (secs > 0) {
+            const hours = Math.floor(secs / 3600);
+            const minutes = Math.floor((secs % 3600) / 60);
+            const seconds = secs % 60;
+            remain.textContent = 'Yeni ödül: ' + [hours, minutes, seconds].map(x => String(x).padStart(2, '0')).join(':') + ' sonra';
+          } else {
+            remain.textContent = '24 saatte bir alınır · Gücüne anında eklenir';
+          }
+        }
+      };
+      updateCooldown();
+      dailyCountdownTimer = setInterval(updateCooldown, 1000);
+      dailyButton.onclick = () => run(async () => {
         const r = await api('daily');
-        toast('Günlük ödül: +' + fmt(r.reward) + ' para');
+        toast('Günlük ödül: +' + fmt(r.reward) + ' güç ⚡', false, 'success');
         loadTasks();
       });
 
