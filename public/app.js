@@ -541,11 +541,21 @@
         // USD dönüşümü farklı bir finansal kalemdir; bu alanda gerçekte
         // üretilmeyen veya garanti edilmeyen USD tutarları yazılmaz.
         const oilRate = Number(S?.package_oil_per_kpower_hour);
-        const dailyPackOil = Number.isFinite(oilRate) && oilRate >= 0
+        const dailyPackOil = S?.package_oil_per_kpower_hour != null &&
+          Number.isFinite(oilRate) && oilRate >= 0
           ? (Number(p.amount) / 1000) * 24 * oilRate : null;
+        // USD değeri oyun sunucusunun petrol satış fiyatına bağlıdır.
+        // Paket üretimi yalnızca baz gücün tahminidir; Turbo/seviye/bonus hariç.
+        const oilSalePrice = Number(S?.oil_price);
+        const dailyPackUsd = dailyPackOil !== null &&
+          S?.oil_price != null && Number.isFinite(oilSalePrice) && oilSalePrice > 0
+          ? dailyPackOil * oilSalePrice : null;
         const productionLabel = dailyPackOil === null
           ? 'Üretim oranı alınamadı'
           : '+' + fmt(dailyPackOil, 2) + ' petrol / 24 saat';
+        const usdEstimateLabel = dailyPackUsd === null
+          ? 'USD karşılığı hesaplanamadı'
+          : '≈ ' + fmt(dailyPackUsd, 2) + ' USD · oyun içi karşılık';
         const state = p.locked ? 'locked' : p.step === nextStep ? 'next' : p.owned ? 'owned' : '';
         const badge = p.locked ? '' : p.step === nextStep ? '<span class="ribbon">ŞİMDİ AÇIK</span>' : p.owned ? `<span class="ribbon owned">✓ Alındı${p.owned > 1 ? ' ×' + p.owned : ''}</span>` : '';
         const card = el('div', 'tier ' + state, `
@@ -554,7 +564,8 @@
           <div class="tier-body">
             <b>${esc(p.title)}</b>
             <span class="gain">+${fmt(gain)} güç</span>
-            <small class="tier-daily-usd">${productionLabel}</small>
+            <small class="tier-daily-oil">${productionLabel}</small>
+            <small class="tier-daily-usd">${usdEstimateLabel}</small>
             ${p.locked ? `<small class="req">Önce “${esc(p.requires)}” paketini al</small>` : ''}
           </div>
           <button class="price ${p.locked ? 'is-locked' : ''}">${p.locked ? 'Kilitli' : priceLabel(p)}</button>`);
