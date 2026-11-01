@@ -238,6 +238,46 @@
       });
     },
 
+    async banktransfers(arg) {
+      const status=arg||'submitted';
+      const j=await api('bank_invoices',{status});
+      const names={submitted:'Onay bekleyen',waiting:'Henüz bildirilmedi',paid:'Onaylanan',rejected:'Reddedilen',expired:'Süresi dolan'};
+      const tabs=Object.entries(names).map(([k,v])=>`<a href="#banktransfers/${k}" class="tab${k===status?' on':''}">${v} (${j.counts[k]||0})</a>`).join('');
+      const rows=j.invoices.map(r=>`<tr>
+        <td>${r.id}<br><small class="mono">OP-${String(r.id).padStart(7,'0')}</small></td>
+        <td>${dt(r.submitted_at||r.created_at)}</td>
+        <td><a href="#user/${r.user_id}">${esc(r.first_name||r.user_id)}</a></td>
+        <td>${esc(r.title||'-')}</td>
+        <td><b>₺${nf(r.amount_try,2)}</b><br><small>$${nf(r.usd,2)} · 1$ = ₺${nf(r.rate_try,4)}</small></td>
+        <td>${esc(r.bank_name)}<br><small>${esc(r.holder)}</small><br><small class="mono">${esc(r.iban)}</small></td>
+        <td>${r.payer_name?'Gönderici: '+esc(r.payer_name):'—'}<br>
+          ${r.receipt_reference?'Dekont: '+esc(r.receipt_reference):'Bildirimsiz'}
+          ${r.note?'<br>Not: '+esc(r.note):''}</td>
+        <td>${r.status==='submitted'
+          ? `<button class="ok" data-bankapprove="${r.id}">Ödemeyi doğruladım · Onayla</button>
+            <button class="sm" data-bankreject="${r.id}">Reddet</button>`
+          :names[r.status]||r.status}</td></tr>`).join('')||
+        '<tr><td colspan="8">Bu durumda TL transfer kaydı yok.</td></tr>';
+      page(`<h1>TL Havale / EFT Siparişleri</h1>
+        <p class="hint"><b>Güvenlik:</b> Bir müşteri sadece "Havaleyi gönderdim" diyerek paket alamaz.
+          Banka hesabınızda gelen para, gönderici, açıklama (OP-...) ve tutarı gerçekten doğrulamadan onaylamayın.
+          Reddetme işlemi banka transferini iade etmez.</p>
+        <div class="tabs">${tabs}</div>
+        <table><tr><th># / Kod</th><th>Tarih</th><th>Oyuncu</th><th>Paket</th><th>TL tutar</th><th>Alıcı hesap</th><th>Gönderici / Dekont</th><th>İşlem</th></tr>
+          ${rows}</table>`,j.dev);
+      main.querySelectorAll('[data-bankapprove]').forEach(b=>b.onclick=async()=>{
+        if(!confirm('DİKKAT: Havalenin gerçekten banka hesabınıza geçtiğini, tam TL tutarını, göndereni ve OP kodunu doğruladınız mı? Onaylanınca paket otomatik teslim edilir.'))return;
+        try{flash=(await api('bank_invoice_approve',{id:b.dataset.bankapprove})).msg;route();}
+        catch(e){alert(e.message);}
+      });
+      main.querySelectorAll('[data-bankreject]').forEach(b=>b.onclick=async()=>{
+        const note=prompt('Ret gerekçesi (müşteriye otomatik iade yapılmaz):','Banka transferi doğrulanamadı.');
+        if(note===null)return;
+        try{flash=(await api('bank_invoice_reject',{id:b.dataset.bankreject,note})).msg;route();}
+        catch(e){alert(e.message);}
+      });
+    },
+
     async banks(editId) {
       const j = await api('banks');
       const rows = j.banks.map(b => `<tr>
