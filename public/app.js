@@ -199,8 +199,8 @@
     $('#coins').textContent = '$' + fmt(S.balance ?? 0, 2);
     $('#power').textContent = fmt(S.power);
     $('#levelBadge').textContent = 'Seviye ' + S.level;
-    $('#rateBadge').textContent = S.starter_drill_usd_24h !== null && S.starter_drill_usd_24h !== undefined
-      ? '🛢 24 saatte $0,05'
+    $('#rateBadge').textContent = S.starter_drill_oil_24h != null
+      ? '🛢 24 saatte ' + fmt(S.starter_drill_oil_24h, 2) + ' petrol'
       : fmt(S.rate_hour, S.rate_hour < 10 ? 2 : 1) + ' petrol / saat';
     $('#turboBadge').classList.toggle('hidden', !S.boost_until);
     $('#turboBadge').textContent = 'TURBO x' + S.boost_mult;
@@ -452,7 +452,11 @@
     const baseHourRate = boostActive ? hourRate / Number(S.boost_mult) : hourRate;
     const boostHoursLeft = boostActive ? Math.min(24, Math.max(0, (Number(S.boost_until) - serverNow()) / 3600)) : 0;
     const dailyOil = baseHourRate * (24 + boostHoursLeft * (boostActive ? Number(S.boost_mult) - 1 : 0));
-    const dailyLabel = fmt(dailyOil, dailyOil > 0 && dailyOil < 0.01 ? 6 : dailyOil < 10 ? 3 : 2);
+    // Petrol miktarı ile $ değerini karıştırma: başlangıç oyuncusunda doğrudan
+    // sunucunun belirlediği 24 saatlik üretim (0,05 petrol) gösterilir.
+    const shownDailyOil = S?.starter_drill_oil_24h != null
+      ? Number(S.starter_drill_oil_24h) : dailyOil;
+    const dailyLabel = fmt(shownDailyOil, shownDailyOil > 0 && shownDailyOil < 0.01 ? 6 : 2);
     box.append(el('div', 'shop-hero', `
       <div><small>Gücün</small><b>⚡ ${fmt(S?.power || 0)}</b></div>
       <div><small>Üretim</small><b class="shop-daily">🛢 ${dailyLabel}</b><i>petrol / 24 saat</i></div>
