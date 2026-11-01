@@ -664,7 +664,16 @@ main { flex: 1; position: relative; min-height: 0; }
   font-size: 23px; border: 3px solid #3c2b20;
   box-shadow: 0 0 0 2px rgba(239,194,137,.5);
   background: var(--c, #447c9f); }
-#sheet .payment-icon.stars { background: #c58a1c; font-size: 28px; }
+#sheet .payment-icon.stars-logo {
+  background: radial-gradient(circle at 36% 25%,#fff1a7 0%,#ebbc36 44%,#c38014 100%);
+  padding: 0; line-height: 0; overflow: hidden; justify-self: center;
+  align-self: center; box-sizing: border-box; flex: 0 0 52px; min-width: 52px;
+}
+#sheet .stars-symbol { display: block; width: 35px; height: 35px; flex: none; overflow: visible; }
+@media (max-width: 380px) {
+  #sheet .payment-icon.stars-logo { width: 44px; height: 44px; min-width: 44px; flex-basis: 44px; }
+  #sheet .stars-symbol { width: 31px; height: 31px; }
+}
 #sheet .payment-card-list + .payment-card-list { margin-top: 9px; }
 #sheet .bank-loading { color: #e6d3c0; text-align: center; margin: 9px 0; font-size: 12px; }
 
@@ -704,4 +713,18 @@ main { flex: 1; position: relative; min-height: 0; }
   #sheet .bank-brand,#sheet .payment-icon { width: 44px; height: 44px; flex-basis: 44px; }
   #sheet .bank-option-text small { font-size: 10px; }
   #sheet .bank-bonus-pill { padding: 4px 5px; font-size: 10px; }
+}
+
+/* Kısa GRAMCOIN başlığı, altında 8 basamaklı tutar ve USD karşılığı. */
+.chip .gram-balance small {
+  font-size: 10px; font-weight: 900; color: #e6d8af;
+  letter-spacing: .045em;
+}
+.chip .gram-balance b {
+  font-size: clamp(11px, 2.9vw, 16px);
+  line-height: 1.18; letter-spacing: -.017em;
+  font-variant-numeric: tabular-nums;
+}
+.chip .gram-balance #coinUsdEquivalent {
+  font-size: 11px; font-weight: 800; color: #d8c9af; margin-top: 2px;
 }

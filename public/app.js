@@ -26,10 +26,10 @@
   const gramNumber = (n) => Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 8, maximumFractionDigits: 8 });
   function renderGramBalance() {
     const usd = Math.max(0, Number(S?.balance) || 0);
-    $('#coinUsdEquivalent').textContent = 'USD bakiye: $' + fmt(usd, 2);
+    $('#coinUsdEquivalent').textContent = '$' + fmt(usd, 2) + ' USD';
     $('#coins').textContent = gramUsdPrice === null
-      ? 'GRAM kuru alınamadı'
-      : gramNumber(usd / gramUsdPrice) + ' GRAM';
+      ? 'Kur alınamadı'
+      : gramNumber(usd / gramUsdPrice);
   }
   async function refreshGramQuote() {
     try {
@@ -640,7 +640,15 @@
       </div>
       <div id="bankCheckoutMethods" class="payment-card-list" data-dialog="${dialogVersion}"></div>
       <button type="button" class="coin payment-method-card payment-stars-card" id="payStars">
-        <span class="payment-icon stars">⭐</span>
+        <span class="payment-icon stars stars-logo" aria-hidden="true">
+          <svg class="stars-symbol" viewBox="0 0 48 48" focusable="false">
+            <path d="M24 3.5 30.1 16.2 44.1 18.2 34 28.2 36.4 42.5 24 35.7 11.6 42.5 14 28.2 3.9 18.2 17.9 16.2Z"
+              fill="#FFD85A" stroke="#F29F1C" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M24 12 28 20 36.7 21.3 30.3 27.7 31.8 36.4 24 32.2 16.2 36.4 17.7 27.7 11.3 21.3 20 20Z"
+              fill="#FFF4AE"/>
+            <path d="M24 7 24 13 M9 17 14 18" fill="none" stroke="#FFF7D2" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </span>
         <span class="payment-option-copy"><b>Telegram Stars</b><small>Telegram ile öde</small></span>
         <span class="method-arrow">›</span>
       </button>
