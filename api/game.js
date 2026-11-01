@@ -90,9 +90,15 @@ export default async function handler(req, res) {
         case 'friends': {
           const list = (await c.query('SELECT first_name, username, started, oil_total FROM users WHERE ref_by = $1 ORDER BY created_at DESC LIMIT 100', [u.id])).rows;
           const cnt = (await c.query('SELECT COUNT(*)::int AS total, COALESCE(SUM(started),0)::int AS active FROM users WHERE ref_by = $1', [u.id])).rows[0];
+          const carry = (await c.query('SELECT micro_usd FROM referral_commission_carry WHERE user_id=$1', [u.id])).rows[0];
+          const fixedRewards = (await c.query('SELECT COALESCE(SUM(amount),0)::float AS total FROM referral_rewards WHERE referrer_id=$1', [u.id])).rows[0];
           extra.friends = {
             link: await refLink(u.id), total: cnt.total, active: cnt.active,
-            earned: Math.round(u.ref_earned * 100) / 100, ref_power: s.ref_power, ref_share: s.ref_share, ref_rates:G.referralRates(s), ref_depth:9,
+            earned: Math.round((Number(u.ref_earned || 0) + Number(fixedRewards?.total || 0)) * 100) / 100,
+            pending_commission_usd: Number(carry?.micro_usd || 0) / 1000000,
+            ref_reward_days: Number(s.ref_reward_days) || 7,
+            ref_reward_usd: Number(s.ref_reward_usd) || 0,
+            ref_power: s.ref_power, ref_share: s.ref_share, ref_rates:G.referralRates(s), ref_depth:9,
             list: list.map((f) => ({ name: f.first_name || f.username || 'Oyuncu', active: !!f.started, oil: Math.round(f.oil_total * 10) / 10 })),
           };
           break;
