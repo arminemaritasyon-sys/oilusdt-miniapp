@@ -194,6 +194,31 @@
   }
 
   /* ---------- Petrol ekranı ---------- */
+  // Zip içindeki seviye 01..10 animasyonunu API'den yükle. 11+ için 10 kullan.
+  // Üretim sürerken SVG hareket eder, durduğunda aynı SVG'nin hareketsiz hâli görünür.
+  const pumpAnimation = $('#pumpAnimation');
+  const pumpGround = pumpAnimation?.closest('.ground');
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || false;
+  function updatePumpAnimation() {
+    if (!S || !pumpAnimation || !pumpGround) return;
+    const lvl = Math.max(1, Math.min(10, Math.floor(Number(S.level) || 1)));
+    const still = !S.running || reducedMotion ? 1 : 0;
+    const source = '/api/sondaj?level=' + lvl + '&still=' + still + '&v=1';
+    if (pumpAnimation.dataset.current === source) return;
+    pumpAnimation.dataset.current = source;
+    pumpGround.classList.remove('pump-art-loaded');
+    pumpAnimation.src = source;
+  }
+  if (pumpAnimation) {
+    pumpAnimation.addEventListener('load', () => {
+      if (pumpAnimation.naturalWidth > 0) pumpGround?.classList.add('pump-art-loaded');
+    });
+    pumpAnimation.addEventListener('error', () => {
+      pumpGround?.classList.remove('pump-art-loaded');
+      console.warn('[Oil Pump] Animasyon yüklenemedi; mevcut sondaj yedeği kullanılıyor.');
+    });
+  }
+
   function render() {
     if (!S) return;
     $('#coins').textContent = '$' + fmt(S.balance ?? 0, 2);
@@ -208,6 +233,7 @@
     $('#pumpSvg').classList.toggle('paused', !S.running);
     // Saha seviyeye göre büyür: 1-4 tek kuyu, 5-9 ikinci tank, 10-19 sondaj kulesi, 20+ alev bacası
     $('#pumpSvg').dataset.tier = S.level >= 20 ? 4 : S.level >= 10 ? 3 : S.level >= 5 ? 2 : 1;
+    updatePumpAnimation();
     $('#firstBonus').classList.toggle('hidden', !S.first_buy);
     $('#firstBonusPct').textContent = '+%' + Math.round(S.first_bonus * 100);
     tick();
