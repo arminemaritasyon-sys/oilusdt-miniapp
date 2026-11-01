@@ -213,10 +213,19 @@ main { flex: 1; position: relative; min-height: 0; }
 .well { position: absolute; left: 50%; top: -2px; bottom: 0; width: 16px; margin-left: -8px; background: #1b1b1f; }
 .well i { display: block; height: 16px; margin: 26px -2px 0; background: #e6b23a; border-radius: 3px; }
 
-.stats { position: absolute; left: 14px; right: 14px; top: 18px; display: flex; justify-content: space-between; gap: 12px; }
-.stat { display: flex; align-items: center; gap: 10px; background: rgba(18,16,18,.9); border-radius: 14px; padding: 8px 14px 8px 10px; min-width: 0; flex: 0 1 43%; box-shadow: 0 4px 0 rgba(0,0,0,.3); }
+.stats { position: absolute; left: 12px; right: 12px; top: 18px; display: flex; justify-content: space-between; gap: 8px; }
+.stat { display: flex; align-items: center; gap: 7px; background: rgba(18,16,18,.9); border-radius: 14px; padding: 8px 9px 8px 7px; min-width: 0; flex: 1 1 0; box-shadow: 0 4px 0 rgba(0,0,0,.3); }
+.stat > div { flex: 1 1 auto; min-width: 0; }
 .stat small { display: block; font-size: 12px; font-weight: 800; color: var(--muted); }
-.stat b { display: block; font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat b { display: block; font-size: clamp(13px, 4.3vw, 22px); font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat #oil { font-size: clamp(11px, 3.2vw, 17px); letter-spacing: -.025em; }
+@media (max-width: 360px) {
+  .stats { left: 8px; right: 8px; gap: 6px; }
+  .stat { gap: 5px; padding: 7px 6px; }
+  .stat .ico { width: 26px; height: 26px; }
+  .stat small { font-size: 10px; }
+  .stat #oil { font-size: 11px; }
+}
 .ico { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; }
 .power-ico { background: radial-gradient(circle at 50% 60%, #fff 0 38%, #e2533f 40%); clip-path: path("M17 1C11 9 4 15 4 22a13 13 0 0 0 26 0C30 15 23 9 17 1Z"); }
 .oil-ico { background: #fff; border-radius: 4px; width: 28px; position: relative; }

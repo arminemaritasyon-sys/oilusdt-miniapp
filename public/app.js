@@ -200,7 +200,7 @@
     $('#power').textContent = fmt(S.power);
     $('#levelBadge').textContent = 'Seviye ' + S.level;
     $('#rateBadge').textContent = S.starter_drill_usd_24h !== null && S.starter_drill_usd_24h !== undefined
-      ? '🛢 24 saatte $0,05 · yavaş sondaj'
+      ? '🛢 24 saatte $0,05'
       : fmt(S.rate_hour, S.rate_hour < 10 ? 2 : 1) + ' petrol / saat';
     $('#turboBadge').classList.toggle('hidden', !S.boost_until);
     $('#turboBadge').textContent = 'TURBO x' + S.boost_mult;
