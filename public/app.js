@@ -618,6 +618,56 @@
   const SYMBOLS = { GRAMCOIN: '◈', 'BNB COIN': '⬡', TRONCOIN: '▼', USDT: '₮', USDC: '$', TRON: '▼', TRX: '▼', TON: '◆', BTC: '₿', BITCOIN: '₿', ETH: 'Ξ', ETHEREUM: 'Ξ', LTC: 'Ł', LITECOIN: 'Ł', BNB: '◈', SOL: '≡', SOLANA: '≡', DOGE: 'Ð', XRP: '✕' };
   const coinSym = (label) => SYMBOLS[String(label).toUpperCase()] || String(label)[0] || '?';
   const usd = (n) => '$' + fmt(n, 2);
+  // Seçili paketin USD tutarını her açık kripto yöntemi için canlı kura çevir.
+  // Ödeme siparişindeki kesin miktar aynı kur kaynağıyla sunucuda yeniden hesaplanır.
+  let cryptoQuoteCache = null;
+  let cryptoQuoteAt = 0;
+  let cryptoQuoteRequest = null;
+  async function loadCryptoQuotes() {
+    if (cryptoQuoteCache && Date.now() - cryptoQuoteAt < 60000) return cryptoQuoteCache;
+    if (cryptoQuoteRequest) return cryptoQuoteRequest;
+    cryptoQuoteRequest = (async () => {
+      const response = await fetch('/api/crypto_quote', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Kur servisine erişilemiyor');
+      const json = await response.json();
+      if (!json.ok || !Array.isArray(json.quotes)) throw new Error('Kur bilgisi alınamadı');
+      cryptoQuoteCache = json.quotes;
+      cryptoQuoteAt = Date.now();
+      return cryptoQuoteCache;
+    })();
+    try { return await cryptoQuoteRequest; }
+    finally { cryptoQuoteRequest = null; }
+  }
+  function previewCoinAmount(usdAmount, quote) {
+    const rate = Number(quote?.usdPerCoin);
+    const usdValue = Number(usdAmount);
+    if (!Number.isFinite(rate) || rate <= 0 || !Number.isFinite(usdValue) || usdValue <= 0) return null;
+    const precision = Math.min(8, Math.max(2, Number(quote.decimals) || 4,
+      ['bitcoin', 'ethereum'].includes(quote.priceId) ? 8 : 2));
+    const amount = usdValue / rate;
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+    // Küçük BTC miktarlarını 0 göstermemek için dinamik hassasiyet.
+    return amount.toLocaleString('en-US', { maximumFractionDigits: precision,
+      minimumFractionDigits: Math.min(precision, amount < 1 ? 6 : 2), useGrouping: false });
+  }
+  function updateCryptoEstimates(p, dialogVersion) {
+    loadCryptoQuotes().then(quotes => {
+      if (purchaseDialogVersion !== dialogVersion) return;
+      document.querySelectorAll('#sheet [data-crypto-estimate]').forEach(label => {
+        const quote = quotes.find(q => Number(q.id) === Number(label.dataset.cryptoEstimate));
+        const value = previewCoinAmount(p.usd, quote);
+        label.textContent = value ? '≈ ' + value + ' ' + quote.label : 'Kur alınamadı';
+        label.title = value ? '≈ ' + value + ' ' + quote.label + ' ('
+          + fmt(p.usd, 2) + ' USD, CoinGecko anlık kur tahmini)' : 'Kur alınamadı';
+      });
+    }).catch(() => {
+      if (purchaseDialogVersion !== dialogVersion) return;
+      document.querySelectorAll('#sheet [data-crypto-estimate]').forEach(label => {
+        label.textContent = 'Kur alınamadı';
+      });
+    });
+  }
+
   const copySvg = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 8h11v13H8Zm-4-5h11v3H7v11H4Z"/></svg>';
   let pollTimer = null;
   const stopPoll = () => { clearTimeout(pollTimer); pollTimer = null; };
@@ -684,13 +734,14 @@
       ${showCrypto ? `<div class="payment-card-list">${crypto.wallets.map((w) => `<button type="button"
         class="coin payment-method-card" data-wallet="${Number(w.id)}">
         <span class="payment-icon" style="--c:${esc(w.color)}">${esc(coinSym(w.label))}</span>
-        <span class="payment-option-copy"><b>${esc(w.label)}</b><small>${esc(w.network)}</small></span>
+        <span class="payment-option-copy"><b>${esc(w.label)}</b><small class="crypto-network">${esc(w.network)}</small><small class="crypto-estimate" data-crypto-estimate="${Number(w.id)}">Kur yükleniyor…</small></span>
         <span class="method-arrow">›</span>
       </button>`).join('')}</div>` : ''}
       </div>
       <button class="pay-cancel" data-close>Vazgeç</button>`);
     $('#payStars').onclick = () => { closeSheet(); payStars(p); };
     $('#sheet').querySelectorAll('[data-wallet]').forEach(b=>b.onclick=()=>payCrypto(p,Number(b.dataset.wallet)));
+    if (showCrypto) updateCryptoEstimates(p, dialogVersion);
 
     // Önceden gelen aktif IBAN'ları anında göster; aynı anda en güncel bankaları
     // yeniden al. Bu talep yavaşlasa/başarısız olsa bile alışveriş penceresi
