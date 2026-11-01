@@ -270,8 +270,8 @@
       ? Number(S.starter_drill_usd_24h)
       : dailyOilProduction() * Math.max(0, Number(S.oil_price) || 0);
     $('#rateBadge').textContent = Number.isFinite(dailyUsdEstimate)
-      ? '💵 24 saatte $' + fmt(dailyUsdEstimate, 2)
-      : '💵 24 saatlik USD hesaplanamadı';
+      ? '24 saatte $' + fmt(dailyUsdEstimate, 2)
+      : '24 saatlik USD hesaplanamadı';
     $('#turboBadge').classList.toggle('hidden', !S.boost_until);
     $('#turboBadge').textContent = 'TURBO x' + S.boost_mult;
     $('#btnUpgrade').disabled = S.upgrade_cost === null;
@@ -555,7 +555,7 @@
           <div class="tier-body">
             <b>${esc(p.title)}</b>
             <span class="gain">+${fmt(gain)} güç</span>
-            <small class="tier-daily-usd">💵 ${usdCaption}</small>
+            <small class="tier-daily-usd">${usdCaption}</small>
             ${p.locked ? `<small class="req">Önce “${esc(p.requires)}” paketini al</small>` : ''}
           </div>
           <button class="price ${p.locked ? 'is-locked' : ''}">${p.locked ? 'Kilitli' : priceLabel(p)}</button>`);
