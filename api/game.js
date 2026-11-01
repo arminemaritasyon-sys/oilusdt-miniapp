@@ -1,5 +1,5 @@
 import { tx } from '../lib/db.js';
-import { env, tg, verifyInitData, refLink, botUsername } from '../lib/tg.js';
+import { env, tg, verifyInitData, refLink, botUsername, parseReferralCode } from '../lib/tg.js';
 import * as G from '../lib/game.js';
 import { activeWallets, createWalletInvoice, submitWalletInvoice, notifyAdminsSubmitted, publicInvoice } from '../lib/wallet.js';
 import * as R from '../lib/rewards.js';
@@ -31,7 +31,11 @@ export default async function handler(req, res) {
       }
       const s = await G.loadSettings(c);
       if (s.maintenance > 0) throw new G.GameError('Bakım çalışması yapılıyor, birazdan tekrar dene.');
-      let u = await G.ensureUser(c, s, tgUser, tgUser.start_param);
+      // /start=rID ile botta açılan Mini App, Telegram initData.start_param göndermeyebilir.
+      // Bu yüzden yalnızca doğrulanmış Telegram kullanıcısının ref kodunu
+      // Mini App bağlantısının URL'sinden de al.
+      const referral = parseReferralCode(tgUser.start_param) || parseReferralCode(body.ref);
+      let u = await G.ensureUser(c, s, tgUser, referral);
       if (u.banned) throw new G.GameError('Hesabın askıya alındı.');
       const extra = {};
       const migrated = await G.migrateLegacyCoins(c, u);
