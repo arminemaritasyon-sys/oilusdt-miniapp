@@ -547,3 +547,43 @@ main { flex: 1; position: relative; min-height: 0; }
 .tl-bank-row span { font-weight: 700; font-size: 13px; }
 .tl-bank-row small { color: #c7b6a7; font-size: 10px; white-space: nowrap; }
 .coin.unavailable { opacity: .52; cursor: not-allowed; }
+
+/* TL ödeme banka seçimi: mobilde IBAN tam görünür ve kopyalanabilir. */
+.bank-choose-note {
+  margin: 10px 2px 14px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #d8cfc4;
+}
+.bank-choose-note a { color: #c1d7ff; text-decoration: underline; }
+.bank-choices { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.bank-option {
+  border: 2px solid #766344;
+  border-radius: 16px;
+  padding: 13px;
+  background: linear-gradient(135deg, #302c2b, #25252a);
+  box-shadow: 0 3px 0 rgba(0,0,0,.25);
+  min-width: 0;
+}
+.bank-option-name { color: #ffdf9a; font-weight: 900; font-size: 16px; margin-bottom: 5px; }
+.bank-option > small { color: #e0d6c9; display: block; margin-bottom: 8px; overflow-wrap: anywhere; }
+.bank-iban-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.bank-iban-row code {
+  flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere;
+  word-break: break-word; font: 700 12px/1.55 ui-monospace, Consolas, monospace;
+  background: rgba(0,0,0,.32); border-radius: 8px; padding: 8px; color: #fff7e8;
+}
+.bank-iban-row button { flex: 0 0 38px; height: 38px; display: grid; place-items: center;
+  border-radius: 10px; background: #386dca; color: white; }
+.bank-iban-row svg { width: 20px; height: 20px; }
+.bank-select { display: block; margin-top: 10px; padding: 12px 10px; width: 100%;
+  border-radius: 12px; background: #5b9a38; border: 1px solid #93d467;
+  color: #fff; font: 900 13px Rubik,system-ui,sans-serif; }
+.bank-select:active { transform: translateY(1px); }
+.bank-confirm { margin: 12px 0; display: grid; gap: 11px; }
+.bank-confirm label { display: grid; gap: 6px; font-size: 12px; font-weight: 800; color: #e8dace; }
+.bank-confirm input { width: 100%; }
+@media (max-width: 360px) {
+ .bank-option { padding: 9px; }
+ .bank-iban-row code { font-size: 11px; }
+}

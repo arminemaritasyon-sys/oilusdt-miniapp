@@ -168,6 +168,10 @@ export default async function handler(req, res) {
       await notifyAdminsSubmitted(out.announce.row, tgUser, out.announce.title);
       delete out.announce;
     }
+    if (out.bank_notify) {
+      await notifyAdminsBankInvoice(out.bank_notify.row, tgUser, out.bank_notify.title);
+      delete out.bank_notify;
+    }
     if (out.withdrawAnnounce) {
       if(out.withdrawAnnounce.status==='approved')await notifyWithdrawalGroup(out.withdrawAnnounce.id,'approved');
       await R.notifyAdminsWithdraw(out.withdrawAnnounce, tgUser);
