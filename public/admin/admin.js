@@ -250,8 +250,7 @@
         <td>${esc(r.title||'-')}</td>
         <td><b>₺${nf(r.amount_try,2)}</b><br><small>$${nf(r.usd,2)} · 1$ = ₺${nf(r.rate_try,4)}</small></td>
         <td>${esc(r.bank_name)}<br><small>${esc(r.holder)}</small><br><small class="mono">${esc(r.iban)}</small></td>
-        <td>${r.payer_name?'Gönderici: '+esc(r.payer_name):'—'}<br>
-          ${r.receipt_reference?'Dekont: '+esc(r.receipt_reference):'Bildirimsiz'}
+        <td>${r.status==='submitted'?'Bildirim alındı':r.status==='paid'?'Ödeme onaylandı':'—'}
           ${r.note?'<br>Not: '+esc(r.note):''}</td>
         <td>${r.status==='submitted'
           ? `<button class="ok" data-bankapprove="${r.id}">Ödemeyi doğruladım · Onayla</button>
@@ -260,10 +259,10 @@
         '<tr><td colspan="8">Bu durumda TL transfer kaydı yok.</td></tr>';
       page(`<h1>TL Havale / EFT Siparişleri</h1>
         <p class="hint"><b>Güvenlik:</b> Bir müşteri sadece "Havaleyi gönderdim" diyerek paket alamaz.
-          Banka hesabınızda gelen para, gönderici, açıklama (OP-...) ve tutarı gerçekten doğrulamadan onaylamayın.
+          Banka hesabınıza gelen tutarı ve OP sipariş kodunu gerçekten doğrulamadan onaylamayın.
           Reddetme işlemi banka transferini iade etmez.</p>
         <div class="tabs">${tabs}</div>
-        <table><tr><th># / Kod</th><th>Tarih</th><th>Oyuncu</th><th>Paket</th><th>TL tutar</th><th>Alıcı hesap</th><th>Gönderici / Dekont</th><th>İşlem</th></tr>
+        <table><tr><th># / Kod</th><th>Tarih</th><th>Oyuncu</th><th>Paket</th><th>TL tutar</th><th>Alıcı hesap</th><th>Bildirim</th><th>İşlem</th></tr>
           ${rows}</table>`,j.dev);
       main.querySelectorAll('[data-bankapprove]').forEach(b=>b.onclick=async()=>{
         if(!confirm('DİKKAT: Havalenin gerçekten banka hesabınıza geçtiğini, tam TL tutarını, göndereni ve OP kodunu doğruladınız mı? Onaylanınca paket otomatik teslim edilir.'))return;
