@@ -199,7 +199,9 @@
     $('#coins').textContent = '$' + fmt(S.balance ?? 0, 2);
     $('#power').textContent = fmt(S.power);
     $('#levelBadge').textContent = 'Seviye ' + S.level;
-    $('#rateBadge').textContent = fmt(S.rate_hour, S.rate_hour < 10 ? 2 : 1) + ' petrol / saat';
+    $('#rateBadge').textContent = S.starter_drill_usd_24h !== null && S.starter_drill_usd_24h !== undefined
+      ? '🛢 24 saatte $0,05 · yavaş sondaj'
+      : fmt(S.rate_hour, S.rate_hour < 10 ? 2 : 1) + ' petrol / saat';
     $('#turboBadge').classList.toggle('hidden', !S.boost_until);
     $('#turboBadge').textContent = 'TURBO x' + S.boost_mult;
     $('#btnUpgrade').disabled = S.upgrade_cost === null;
@@ -214,7 +216,7 @@
   function tick() {
     if (!S) return;
     const oil = liveOil();
-    $('#oil').textContent = fmt(oil, oil < 100 ? 5 : 2);
+    $('#oil').textContent = fmt(oil, S.starter_drill_usd_24h !== null && S.starter_drill_usd_24h !== undefined ? 8 : oil < 100 ? 5 : 2);
 
     // Tank doluluğu: bir vardiyalık üretime göre
     const cap = Math.max(S.rate_hour * S.shift_hours, 0.0001);
