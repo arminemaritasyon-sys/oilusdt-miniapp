@@ -61,8 +61,8 @@ export default async function handler(req, res) {
     const text = String(msg.text || '').trim();
 
     // 3) /start [davet kodu]
-    if (text.split(/\\s+/)[0].split('@')[0] === '/start') {
-      const param = text.split(/\\s+/).slice(1).join(' ').trim() || null;
+    if (text.split(/\s+/)[0].split('@')[0] === '/start') {
+      const param = text.split(/\s+/).slice(1).join(' ').trim() || null;
       // Veritabanı geçici olarak ulaşılamasa da /start komutu yanıtsız kalmasın.
       try {
         await tx(async (c) => G.ensureUser(c, await G.loadSettings(c), from, param));
