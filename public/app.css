@@ -490,3 +490,13 @@ main { flex: 1; position: relative; min-height: 0; }
 .account-delete-warning p { margin: 8px 0 0; }
 .account-delete-label { display: block; margin-bottom: 9px; font-size: 13px; color: #fff0e8; }
 #accountDeleteWord { width: 100%; font-size: 17px; font-weight: 800; text-transform: uppercase; }
+
+/* Arkadaşlar ekranındaki 9 katmanlı kazanç tablosu */
+.ref-earnings { margin-top: 18px; }
+.ref-earn-title { margin: 0 0 7px; font-size: 16px; font-weight: 900; color: #fff2d5; letter-spacing: .015em; }
+.ref-earn-intro, .ref-earn-foot { color: #bfcce5; font-size: 12px; line-height: 1.5; margin: 0; }
+.ref-earn-list { display: grid; gap: 6px; padding: 0; margin: 13px 0 12px; list-style: none; }
+.ref-earn-list li { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid rgba(167,188,234,.2); border-radius: 12px; background: rgba(6,12,30,.24); }
+.ref-earn-level { display: inline-flex; align-items: center; gap: 9px; color: #e5ebfb; font-size: 13px; font-weight: 700; }
+.ref-earn-index { display: inline-flex; align-items: center; justify-content: center; width: 23px; height: 23px; border-radius: 50%; color: #0b1d36; background: #c2d2ed; font-size: 11px; font-weight: 900; }
+.ref-earn-list strong { color: #ffd479; font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; }
