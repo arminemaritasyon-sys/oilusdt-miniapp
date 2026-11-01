@@ -556,7 +556,7 @@
           : '+' + fmt(dailyPackOil, 2) + ' petrol / 24 saat';
         const usdEstimateLabel = dailyPackUsd === null
           ? 'Oyun içi USD değeri hesaplanamadı'
-          : '≈ ' + fmt(dailyPackUsd, 2) + ' oyun USD · çekilebilir değil';
+          : '≈ ' + fmt(dailyPackUsd, 2) + ' oyun USD';
         const state = p.locked ? 'locked' : p.step === nextStep ? 'next' : p.owned ? 'owned' : '';
         const badge = p.locked ? '' : p.step === nextStep ? '<span class="ribbon">ŞİMDİ AÇIK</span>' : p.owned ? `<span class="ribbon owned">✓ Alındı${p.owned > 1 ? ' ×' + p.owned : ''}</span>` : '';
         const card = el('div', 'tier ' + state, `
