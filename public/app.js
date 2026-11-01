@@ -270,7 +270,7 @@
       ? Number(S.starter_drill_usd_24h)
       : dailyOilProduction() * Math.max(0, Number(S.oil_price) || 0);
     $('#rateBadge').textContent = Number.isFinite(dailyUsdEstimate)
-      ? '24 saatte  + fmt(dailyUsdEstimate, 2)
+      ? '24 saatte ' + fmt(dailyUsdEstimate, 2) + ' USD'
       : '24 saatlik USD hesaplanamadı';
     $('#turboBadge').classList.toggle('hidden', !S.boost_until);
     $('#turboBadge').textContent = 'TURBO x' + S.boost_mult;
