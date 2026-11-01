@@ -533,12 +533,11 @@
         const badge = p.locked ? '' : p.step === nextStep ? '<span class="ribbon">ŞİMDİ AÇIK</span>' : p.owned ? `<span class="ribbon owned">✓ Alındı${p.owned > 1 ? ' ×' + p.owned : ''}</span>` : '';
         const card = el('div', 'tier ' + state, `
           ${badge}
-          <span class="tier-step">${p.locked ? '🔒' : p.step}</span>
           ${barrelArt(p.step)}
           <div class="tier-body">
             <b>${esc(p.title)}</b>
             <span class="gain">+${fmt(gain)} güç</span>
-            <small>🛢 +${fmt(dailyPackOil, dailyPackOil < 10 ? 2 : 1)} petrol / 24 saat${S?.first_buy ? ' · ilk alım güç bonusu hariç' : ''}</small>
+            <small>🛢 +${fmt(dailyPackOil, dailyPackOil < 10 ? 2 : 1)} petrol / 24 saat</small>
             ${p.locked ? `<small class="req">Önce “${esc(p.requires)}” paketini al</small>` : ''}
           </div>
           <button class="price ${p.locked ? 'is-locked' : ''}">${p.locked ? 'Kilitli' : priceLabel(p)}</button>`);
