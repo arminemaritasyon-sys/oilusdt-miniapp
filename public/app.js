@@ -213,10 +213,50 @@
     tick();
   }
 
+  // PETROL sayacı: sayıyı kısaltmadan kutuya sığan en büyük yazı boyutunu kullan.
+  // Görsel hassasiyet 6 basamak; hesaplama ve saklanan petrol miktarı değişmez.
+  const oilCounter = $('#oil');
+  const oilCanvas = document.createElement('canvas');
+  const oilMeasure = oilCanvas.getContext('2d');
+  let lastOilText = '';
+  let lastOilWidth = -1;
+  function fitOilCounter(oil) {
+    const starter = S?.starter_drill_usd_24h != null;
+    const digits = starter ? 6 : oil < 100 ? 5 : 2;
+    const label = Number(oil || 0).toLocaleString('tr-TR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: digits,
+    });
+    const available = oilCounter.parentElement?.clientWidth || 0;
+    if (label === lastOilText && available === lastOilWidth) return;
+    lastOilText = label;
+    lastOilWidth = available;
+    oilCounter.textContent = label;
+    const maxFontSize = 24;
+    if (!oilMeasure || available <= 0) {
+      oilCounter.style.fontSize = '18px';
+      return;
+    }
+    oilMeasure.font = '900 ' + maxFontSize + 'px "Rubik", system-ui, sans-serif';
+    const textPixels = oilMeasure.measureText(label).width;
+    const fitted = Math.min(maxFontSize, maxFontSize * (available - 3) / Math.max(1, textPixels));
+    oilCounter.style.fontSize = Math.max(11, Math.floor(fitted * 10) / 10) + 'px';
+  }
+  if (typeof ResizeObserver !== 'undefined' && oilCounter.parentElement) {
+    new ResizeObserver(() => {
+      lastOilWidth = -1;
+      if (S) fitOilCounter(liveOil());
+    }).observe(oilCounter.parentElement);
+  }
+  document.fonts?.ready?.then(() => {
+    lastOilWidth = -1;
+    if (S) fitOilCounter(liveOil());
+  });
+
   function tick() {
     if (!S) return;
     const oil = liveOil();
-    $('#oil').textContent = fmt(oil, S.starter_drill_usd_24h !== null && S.starter_drill_usd_24h !== undefined ? 8 : oil < 100 ? 5 : 2);
+    fitOilCounter(oil);
 
     // Tank doluluğu: bir vardiyalık üretime göre
     const cap = Math.max(S.rate_hour * S.shift_hours, 0.0001);
