@@ -172,8 +172,11 @@ main { flex: 1; position: relative; min-height: 0; }
   user-select: none;
   filter: drop-shadow(0 6px 10px rgba(0,0,0,.35));
   z-index: 1;
-  transition: opacity .2s ease;
+  transition: opacity .2s ease, bottom .3s ease;
 }
+/* Seviye 6+ kulelerin alt kısmı sayaçların arkasında kalmasın. */
+.ground.pump-art-high-level .pump-level-art { bottom: 56px; }
+.ground.pump-art-tall-level .pump-level-art { bottom: 68px; }
 .ground.pump-art-loaded .pump-level-art { opacity: 1; }
 .ground.pump-art-loaded #pumpSvg { opacity: 0; visibility: hidden; }
 .stats, .badge-row { z-index: 2; }
@@ -232,7 +235,7 @@ main { flex: 1; position: relative; min-height: 0; }
 .well { position: absolute; left: 50%; top: -2px; bottom: 0; width: 16px; margin-left: -8px; background: #1b1b1f; }
 .well i { display: block; height: 16px; margin: 26px -2px 0; background: #e6b23a; border-radius: 3px; }
 
-.stats { position: absolute; left: 12px; right: 12px; top: 18px; display: flex; justify-content: space-between; gap: 8px; }
+.stats { position: absolute; left: 12px; right: 12px; top: 30px; display: flex; justify-content: space-between; gap: 8px; }
 .stat { display: flex; align-items: center; gap: 7px; background: rgba(18,16,18,.9); border-radius: 14px; padding: 8px 9px 8px 7px; min-width: 0; flex: 1 1 0; box-shadow: 0 4px 0 rgba(0,0,0,.3); }
 .stat > div { flex: 1 1 auto; min-width: 0; }
 .stat small { display: block; font-size: 12px; font-weight: 800; color: var(--muted); }
@@ -250,7 +253,7 @@ main { flex: 1; position: relative; min-height: 0; }
 .oil-ico { background: #fff; border-radius: 4px; width: 28px; position: relative; }
 .oil-ico::after { content: ""; width: 10px; height: 13px; background: #e6a52a; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; }
 
-.badge-row { position: absolute; left: 0; right: 0; top: 90px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 0 12px; }
+.badge-row { position: absolute; left: 0; right: 0; top: 104px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 0 12px; }
 .badge { background: rgba(0,0,0,.45); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 700; color: #f2e6da; }
 .badge.turbo { background: #e2533f; color: #fff; animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { transform: scale(1.06); } }

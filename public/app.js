@@ -202,6 +202,8 @@
   function updatePumpAnimation() {
     if (!S || !pumpAnimation || !pumpGround) return;
     const lvl = Math.max(1, Math.min(10, Math.floor(Number(S.level) || 1)));
+    pumpGround.classList.toggle('pump-art-high-level', lvl >= 6);
+    pumpGround.classList.toggle('pump-art-tall-level', lvl >= 9);
     const still = !S.running || reducedMotion ? 1 : 0;
     const source = '/api/sondaj?level=' + lvl + '&still=' + still + '&v=1';
     if (pumpAnimation.dataset.current === source) return;
