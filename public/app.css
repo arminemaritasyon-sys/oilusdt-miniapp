@@ -158,6 +158,25 @@ main { flex: 1; position: relative; min-height: 0; }
     linear-gradient(#3b3247 0 6px, transparent 6px),
     repeating-linear-gradient(180deg, #4a3d3f 0 38px, #3e3336 38px 76px, #33292c 76px 114px);
 }
+/* 10 seviyelik zip SVG animasyonları: eski çizim erişilemeyen cihazlarda yedek olarak kalır. */
+.pump-level-art {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: min(112vw, 440px);
+  height: auto;
+  max-width: none;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.35));
+  z-index: 1;
+  transition: opacity .2s ease;
+}
+.ground.pump-art-loaded .pump-level-art { opacity: 1; }
+.ground.pump-art-loaded #pumpSvg { opacity: 0; visibility: hidden; }
+.stats, .badge-row { z-index: 2; }
 .pump { position: absolute; bottom: calc(100% - 16px); left: calc(50% - min(84vw, 380px) * .5222); width: min(84vw, 380px); overflow: visible; filter: drop-shadow(0 6px 10px rgba(0,0,0,.35)); }
 .pump .t2, .pump .t3, .pump .t4 { opacity: 0; transition: opacity .6s; }
 .pump[data-tier="2"] .t2, .pump[data-tier="3"] .t2, .pump[data-tier="3"] .t3, .pump[data-tier="4"] :is(.t2, .t3, .t4) { opacity: 1; }

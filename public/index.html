@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=10">
+<link rel="stylesheet" href="app.css?v=11">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -54,6 +54,9 @@
         <svg class="mountains" viewBox="0 0 400 120" preserveAspectRatio="none"><path class="m1" d="M0 120V70l40-30 30 18 45-48 50 52 30-20 45 30 40-40 50 45 30-15 40 25v53Z"/><path class="m2" d="M0 120V92l55-22 45 18 60-28 70 30 55-20 60 22 55-10v38Z"/></svg>
       </div>
       <div class="ground">
+        <img class="pump-level-art" id="pumpAnimation"
+          alt="Sondaj makinesi animasyonu" decoding="async" draggable="false"
+          src="/api/sondaj?level=1&amp;still=1&amp;v=1">
         <svg class="pump" viewBox="0 0 360 210" id="pumpSvg" data-tier="1">
           <defs>
             <linearGradient id="gSteel" x1="0" x2="1"><stop offset="0" stop-color="#2b2d33"/><stop offset=".45" stop-color="#5b5f69"/><stop offset="1" stop-color="#1d1e22"/></linearGradient>
@@ -296,6 +299,6 @@
   <div class="toast hidden" id="toast"></div>
   <div class="loader" id="loader"><div class="drop"></div><b>Oil Pump</b><span id="loadMsg">Yükleniyor…</span></div>
 </div>
-<script src="app.js?v=19"></script>
+<script src="app.js?v=20"></script>
 </body>
 </html>
