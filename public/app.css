@@ -946,3 +946,22 @@ main { flex: 1; position: relative; min-height: 0; }
     font-size: 8px;
   }
 }
+
+/* Gerçek USD -> kripto miktarını ödeme talimatında açık göster. */
+#sheet .pay-usd-equivalent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  font-variant-numeric: tabular-nums;
+}
+#sheet .pay-usd-equivalent b {
+  color: #fff;
+  font-size: clamp(18px, 4.5vw, 22px);
+}
+#sheet .pay-usd-equivalent span {
+  color: #b8f3c8;
+  font-size: clamp(13px, 3.5vw, 16px);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
