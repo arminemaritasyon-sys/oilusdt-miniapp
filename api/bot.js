@@ -73,7 +73,7 @@ export default async function handler(req, res) {
       const keyboard = webappKeyboard(req, '🎮 Oyna');
       const sent = await tg('sendVideo', {
         chat_id: chatId,
-        video: process.env.START_VIDEO_URL || 'https://d2ol7oe51mr4n9.cloudfront.net/user_2wVprG5dCQ1hAex3KVSFlkxrHXr/6e302fdc-a57f-462a-b620-260c37fa1968.mp4',
+        video: process.env.START_VIDEO_URL || 'https://d2ol7oe51mr4n9.cloudfront.net/user_2wVprG5dCQ1hAex3KVSFlkxrHXr/ad1e5dae-ed45-47ff-90d9-1e9a47eb452a.mp4',
         caption,
         supports_streaming: true,
         reply_markup: keyboard,
