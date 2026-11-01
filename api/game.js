@@ -60,7 +60,9 @@ export default async function handler(req, res) {
           extra.upgrade = await G.actUpgrade(c, s, u);
           break;
         case 'daily':
-          extra.reward = G.actDaily(s, u);
+          extra.reward = await G.actDaily(c, s, u);
+          extra.reward_unit = 'power';
+          extra.daily = G.dailyInfo(s, u);
           await R.addPoints(c, u.id, s.points_daily);
           break;
         case 'tasks': {

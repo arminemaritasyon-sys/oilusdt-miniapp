@@ -979,3 +979,14 @@ main { flex: 1; position: relative; min-height: 0; }
   font-weight: 750;
   font-variant-numeric: tabular-nums;
 }
+
+/* Günlük +10/+20/+30 güç ödülü için 24 saatlik kalan süre. */
+.daily .d-txt small { display: block; line-height: 1.4; }
+.daily .d-txt #dailyPowerNext { color: #e5ff9a; font-weight: 900; }
+.daily .daily-cooldown {
+  margin-top: 3px;
+  color: #cdbde8;
+  font-size: clamp(10px, 2.6vw, 12px);
+  font-variant-numeric: tabular-nums;
+}
+.daily button:disabled { opacity: .7; cursor: not-allowed; }
