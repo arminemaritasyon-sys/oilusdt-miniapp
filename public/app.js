@@ -504,12 +504,13 @@
     const bankSection = $('#bankTransferSection');
     if (bankSection) {
       const banks = bankAccounts.slice(0,5);
-      bankSection.innerHTML = `<div class="card tl-bank-card">
-        <h3>₺ TL · Banka hesapları</h3>
-        <p>TL havale/EFT ile ödeme henüz etkin değil. Banka listesi ödeme talimatı değildir.</p>
-        <div class="tl-banks">${banks.map(b=>`<div class="tl-bank-row">
-          <span>🏦 ${esc(b.bank_name)}</span><small>Henüz aktif değil</small>
-        </div>`).join('')}</div></div>`;
+      bankSection.innerHTML = banks.length
+        ? `<div class="card tl-bank-card"><h3>🏦 TL havale / EFT</h3>
+          <p>Ödeme yapmak için bir paket seç ve ödeme yöntemlerinden bankanı seç. IBAN, alıcı ve sipariş tutarı ödeme adımında gösterilir. Paket yalnızca banka transferi doğrulandıktan sonra verilir.</p>
+          <div class="tl-banks">${banks.map(b=>`<div class="tl-bank-row">
+            <span>🏦 ${esc(b.bank_name)}</span><small>Havale/EFT</small>
+          </div>`).join('')}</div></div>`
+        : '';
     }
 
     // Her oyuncunun gerçek sunucu üretim hızından 24 saatlik petrol hesabı.
@@ -596,10 +597,15 @@
     toast('Kopyalandı', false, 'tap');
   }
 
-  /** Paket seçilince ödeme yöntemi penceresi: Telegram Stars veya kripto cüzdanı. */
-  function buy(p) {
+  /** Pakete tıklayınca banka listesini yeniden sorgula; panelden yeni açılan IBAN'lar anında görünür. */
+  async function buy(p) {
     stopPoll();
+    try {
+      const fresh = await api('banks_active');
+      bankAccounts = fresh.bank_accounts || [];
+    } catch (e) { console.warn('[bank payment choices]', e.message); }
     const showCrypto = crypto.wallets.length > 0 && p.usd > 0;
+    const showBank = bankAccounts.length > 0 && priceUsd(p) > 0;
     const gain = p.type === 'power' ? `+${fmt(p.amount * (S?.first_buy ? 1 + S.first_bonus : 1))} güç`
       : p.type === 'coins' ? `+${fmt(p.amount * (S?.first_buy ? 1 + S.first_bonus : 1))} oyun parası` : esc(p.description);
     sheet(`
@@ -610,6 +616,15 @@
         <span class="pay-txt"><b>TELEGRAM STARS</b><small>Telefonunla öde</small></span>
         <span class="pay-amt">$${fmt(priceUsd(p), 2)}</span>
       </button>
+      ${showBank ? `<div class="pay-sec">🏦 BANKA HAVALESİ / EFT <span>TL</span></div>
+        <p class="bank-choose-note">Banka seçerek pakete özel TL tutarını ve ödeme açıklama kodunu oluştur. Kur ödeme siparişinde sabitlenir.</p>
+        <div class="bank-choices">${bankAccounts.map(b=>`<div class="bank-option">
+          <div class="bank-option-name">🏦 ${esc(b.bank_name)}</div>
+          <small>Alıcı: ${esc(b.holder)}</small>
+          <div class="bank-iban-row"><code>${esc(b.iban.replace(/(.{4})/g,'$1 ').trim())}</code>
+            <button type="button" data-bank-copy="${esc(b.iban)}" aria-label="IBAN kopyala">${copySvg}</button></div>
+          <button class="bank-select" type="button" data-bank="${b.id}">BU BANKA İLE TL ÖDE</button>
+        </div>`).join('')}</div>` : ''}
       ${showCrypto ? `<div class="pay-sec">KRİPTO İLE ÖDE <span>${usd(p.usd)}</span></div>
       <div class="coins">${crypto.wallets.map((w) => `<button class="coin" data-wallet="${w.id}">
         <span class="coin-ico" style="--c:${esc(w.color)}">${esc(coinSym(w.label))}</span>
@@ -617,6 +632,96 @@
       <button class="pay-cancel" data-close>Vazgeç</button>`);
     $('#payStars').onclick = () => { closeSheet(); payStars(p); };
     $('#sheet').querySelectorAll('[data-wallet]').forEach((b) => b.onclick = () => payCrypto(p, Number(b.dataset.wallet)));
+    $('#sheet').querySelectorAll('[data-bank-copy]').forEach(b => b.onclick=()=>copyText(b.dataset.bankCopy));
+    $('#sheet').querySelectorAll('[data-bank]').forEach(b => b.onclick=()=>payBank(p, Number(b.dataset.bank)));
+  }
+
+  function payBank(p, bankId) {
+    run(async () => {
+      const j = await api('bank_invoice', {id:p.id, bank:bankId});
+      showBankInvoice(p, j.bank_invoice);
+    });
+  }
+
+  function showBankInvoice(p, inv) {
+    stopPoll();
+    const amountTL = Number(inv.amount_try).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    sheet(`
+      <h2>🏦 TL HAVALE / EFT</h2>
+      <div class="pay-product"><span>🏦</span><div><b>${esc(inv.bank_name)}</b>
+        <small>${esc(p.title)} · ${usd(inv.usd)}</small></div></div>
+      <div class="pay-field"><small>ALICI ADI</small>
+        <div class="copy-row"><code>${esc(inv.holder)}</code>
+          <button class="copy-btn" data-copy="${esc(inv.holder)}" aria-label="Alıcıyı kopyala">${copySvg}</button></div></div>
+      <div class="pay-field"><small>IBAN</small>
+        <div class="copy-row"><code>${esc(inv.iban.replace(/(.{4})/g,'$1 ').trim())}</code>
+          <button class="copy-btn" data-copy="${esc(inv.iban)}" aria-label="IBAN kopyala">${copySvg}</button></div></div>
+      <div class="pay-field"><small>GÖNDERİLECEK TUTAR · TÜRK LİRASI</small>
+        <div class="copy-row"><b class="amt">₺${amountTL}</b>
+          <button class="copy-btn" data-copy="${Number(inv.amount_try).toFixed(2)}" aria-label="Tutarı kopyala">${copySvg}</button></div></div>
+      <div class="pay-field"><small>HAVALE AÇIKLAMASI · SİPARİŞ KODU</small>
+        <div class="copy-row"><code>${esc(inv.code)}</code>
+          <button class="copy-btn" data-copy="${esc(inv.code)}" aria-label="Açıklamayı kopyala">${copySvg}</button></div></div>
+      <p class="bank-choose-note">Ödeme açıklamasına <b>${esc(inv.code)}</b> yaz. Tutar bu sipariş için 24 saat boyunca sabittir.
+        Kur: 1 USD = ₺${Number(inv.rate_try).toLocaleString('tr-TR',{maximumFractionDigits:4})}.
+        <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">Rates By Exchange Rate API</a>.
+        Bu uygulama bankadan otomatik tahsilat kontrolü yapmaz; ödeme ancak yönetici banka hesabına gelen transferi doğruladıktan sonra onaylanır.</p>
+      <div class="pay-status"><span class="pill" id="bankPayState"></span><span id="bankPayHint"></span></div>
+      <div class="bank-confirm">
+        <label>Göndericinin adı soyadı<input id="bankPayerName" class="wd-input"
+          maxlength="120" placeholder="Havale gönderen kişi" value="${esc(inv.payer_name||'')}"></label>
+        <label>Dekont / banka işlem numarası<input id="bankReceiptRef" class="wd-input"
+          maxlength="140" placeholder="Bankadan aldığın işlem numarası"
+          value="${esc(inv.receipt_reference||'')}"></label>
+      </div>
+      <button class="btn green" id="bankSentBtn">HAVALEYİ GÖNDERDİM</button>
+      <button class="pay-cancel" id="bankOther">Başka ödeme yöntemi seç</button>
+    `);
+    $('#sheet').querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>copyText(b.dataset.copy));
+    $('#bankOther').onclick=()=>buy(p);
+    $('#bankSentBtn').onclick=()=>run(async()=>{
+      const payer=$('#bankPayerName').value.trim();
+      const receipt=$('#bankReceiptRef').value.trim();
+      const response=await api('bank_submit',{invoice_id:inv.id,payer_name:payer,receipt_reference:receipt});
+      inv=response.bank_invoice;
+      paintBankState(inv);
+      toast('Havale bildirimin yöneticiye iletildi. Kontrol bekleniyor.');
+    });
+    paintBankState(inv);
+    pollBankInvoice(p,inv.id);
+  }
+  function paintBankState(inv) {
+    const label=$('#bankPayState'),hint=$('#bankPayHint'),sent=$('#bankSentBtn');
+    if(!label)return;
+    const expired=inv.status==='expired'||(inv.status==='waiting'&&serverNow()>inv.expires_at);
+    const descriptions={waiting:['ÖDEME BEKLENİYOR','Havale sonrası dekont bilgisiyle bildir.'],
+      submitted:['ONAY BEKLENİYOR','Banka transferi yönetici tarafından kontrol ediliyor.'],
+      rejected:['DOĞRULANAMADI','Destek için yöneticiye ulaş.'],
+      paid:['ONAYLANDI','Paket hesabına eklendi.']};
+    const [status,info]=expired?['SÜRESİ DOLDU','Yeni paket siparişi oluştur.']:descriptions[inv.status]||descriptions.waiting;
+    label.textContent=status;label.className='pill'+(expired||inv.status==='rejected'?' err':inv.status==='submitted'?' wait':'');
+    hint.textContent=info;
+    if(sent){sent.disabled=expired||inv.status!=='waiting';}
+    $('#bankPayerName').disabled=inv.status!=='waiting';
+    $('#bankReceiptRef').disabled=inv.status!=='waiting';
+  }
+  function pollBankInvoice(p,id) {
+    stopPoll();
+    const check=async()=>{
+      if($('#modal').classList.contains('hidden')||!$('#bankPayState')) return stopPoll();
+      try{
+        const r=await api('bank_status',{invoice_id:id});
+        if(r.bank_invoice.status==='paid'){
+          if(r.products)products=r.products;
+          closeSheet(); renderShop();
+          toast('TL ödemen onaylandı: '+p.title,false,'upgrade');
+          return;
+        }
+        paintBankState(r.bank_invoice);
+      }catch{}
+      pollTimer=setTimeout(check,8000);
+    };
+    pollTimer=setTimeout(check,8000);
   }
 
   function payCrypto(p, walletId) {

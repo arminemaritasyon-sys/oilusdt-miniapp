@@ -248,7 +248,7 @@
       const e = j.banks.find(x=>String(x.id)===editId) ||
         {id:0,bank_name:'',holder:'',iban:'',sort:j.banks.length+1,enabled:0};
       page(`<h1>TL Banka Hesapları</h1>
-        <p class="hint">Banka adı şablonları IBAN değildir. Gerçek banka hesabı açılmış ve TL ödeme mutabakatı kurulmuş olmadıkça oyuncudan transfer istemeyin. Bu ekran yalnızca hesap bilgilerini yönetir; TL ödeme onayı ve paket teslimi yapmaz.</p>
+        <p class="hint">Aktif bankalar paket satın alma ekranında IBAN ile gösterilir. TL siparişleri Admin → TL Transferler sayfasında incelenir; banka hesabında ödemenin gerçekten geçtiği doğrulanmadan paket yüklenmez.</p>
         <table><tr><th>Sıra</th><th>Banka</th><th>Alıcı</th><th>IBAN</th><th>Durum</th><th></th></tr>${rows}</table>
         <h2>${e.id?'Banka bilgisi düzenle':'Yeni banka ekle'}</h2>
         <form class="card form" id="bf"><input type="hidden" name="id" value="${e.id}">

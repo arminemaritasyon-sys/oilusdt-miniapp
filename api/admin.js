@@ -207,7 +207,7 @@ async function run(b, req) {
       const row = [name,holder,iban,Math.floor(Number(b.sort)||0),b.enabled?1:0];
       if(id) await query('UPDATE bank_accounts SET bank_name=$1, holder=$2, iban=$3, sort=$4, enabled=$5 WHERE id=$6',[...row,id]);
       else await query('INSERT INTO bank_accounts(bank_name,holder,iban,sort,enabled) VALUES($1,$2,$3,$4,$5)',row);
-      return {msg:'Banka bilgileri kaydedildi. TL ödemeler otomatik olarak etkinleştirilmez.'};
+      return {msg: b.enabled ? 'Banka etkinleştirildi. Oyuncular paket seçtiğinde IBAN görünecek; ödeme yalnızca manuel onayla tamamlanır.' : 'Banka bilgileri kaydedildi; oyunculara kapalı.'};
     }
 
     case 'wallets':
