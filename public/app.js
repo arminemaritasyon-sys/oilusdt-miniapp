@@ -554,9 +554,20 @@
             ${p.locked ? `<small class="req">Önce “${esc(p.requires)}” paketini al</small>` : ''}
           </div>
           <button class="price ${p.locked ? 'is-locked' : ''}">${p.locked ? 'Kilitli' : priceLabel(p)}</button>`);
-        card.querySelector('button').onclick = () => {
+        // Tüm pakete tıklanabilsin: görsel, başlık, güç alanı ve fiyat butonu.
+        // Fiyat butonuna dokunma da bu tek işleyiciye bubble yapar.
+        const openPackage = () => {
           if (p.locked) { toast(`Önce “${p.requires}” paketini almalısın.`, false, 'error'); return; }
           buy(p);
+        };
+        card.onclick = openPackage;
+        card.tabIndex = 0;
+        card.setAttribute('aria-label', p.title + ' paketi için ödeme yöntemlerini aç');
+        card.onkeydown = (e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && e.target === card) {
+            e.preventDefault();
+            openPackage();
+          }
         };
         list.append(card);
       }
@@ -572,7 +583,15 @@
           <b>${esc(p.title)}</b>
           <p>${esc(p.description)}</p>
           <button class="price">${priceLabel(p)}</button>`);
-        card.querySelector('button').onclick = () => buy(p);
+        card.onclick = () => buy(p);
+        card.tabIndex = 0;
+        card.setAttribute('aria-label', p.title + ' için ödeme yöntemlerini aç');
+        card.onkeydown = (e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && e.target === card) {
+            e.preventDefault();
+            buy(p);
+          }
+        };
         grid.append(card);
       }
       box.append(grid);
@@ -597,43 +616,69 @@
     toast('Kopyalandı', false, 'tap');
   }
 
-  /** Pakete tıklayınca banka listesini yeniden sorgula; panelden yeni açılan IBAN'lar anında görünür. */
-  async function buy(p) {
+  /** Pakete dokununca ödeme penceresini SUNUCUYU BEKLEMEDEN aç. */
+  let purchaseDialogVersion = 0;
+  function buy(p) {
     stopPoll();
-    try {
-      const fresh = await api('banks_active');
-      bankAccounts = fresh.bank_accounts || [];
-    } catch (e) { console.warn('[bank payment choices]', e.message); }
+    const dialogVersion = ++purchaseDialogVersion;
     const showCrypto = crypto.wallets.length > 0 && p.usd > 0;
-    const showBank = bankAccounts.length > 0 && priceUsd(p) > 0;
     const gain = p.type === 'power' ? `+${fmt(p.amount * (S?.first_buy ? 1 + S.first_bonus : 1))} güç`
       : p.type === 'coins' ? `+${fmt(p.amount * (S?.first_buy ? 1 + S.first_bonus : 1))} oyun parası` : esc(p.description);
     sheet(`
       <h2>ÖDEME YÖNTEMİ SEÇ</h2>
-      <div class="pay-product"><span>${productIcon[p.type] || '🛢'}</span><div><b>${esc(p.title)}</b><small>${gain}</small></div></div>
+      <div class="pay-product"><span>${productIcon[p.type] || '🛢'}</span>
+        <div><b>${esc(p.title)}</b><small>${gain}</small></div></div>
       <button class="pay-stars" id="payStars">
         <span class="pay-star">⭐</span>
         <span class="pay-txt"><b>TELEGRAM STARS</b><small>Telefonunla öde</small></span>
-        <span class="pay-amt">$${fmt(priceUsd(p), 2)}</span>
+        <span class="pay-amt">$ ${fmt(priceUsd(p), 2)}</span>
       </button>
-      ${showBank ? `<div class="pay-sec">🏦 BANKA HAVALESİ / EFT <span>TL</span></div>
-        <p class="bank-choose-note">Banka seçerek pakete özel TL tutarını ve ödeme açıklama kodunu oluştur. Kur ödeme siparişinde sabitlenir.</p>
-        <div class="bank-choices">${bankAccounts.map(b=>`<div class="bank-option">
-          <div class="bank-option-name">🏦 ${esc(b.bank_name)}</div>
-          <small>Alıcı: ${esc(b.holder)}</small>
-          <div class="bank-iban-row"><code>${esc(b.iban.replace(/(.{4})/g,'$1 ').trim())}</code>
-            <button type="button" data-bank-copy="${esc(b.iban)}" aria-label="IBAN kopyala">${copySvg}</button></div>
-          <button class="bank-select" type="button" data-bank="${b.id}">BU BANKA İLE TL ÖDE</button>
-        </div>`).join('')}</div>` : ''}
+      <div id="bankCheckoutMethods" data-dialog="${dialogVersion}"></div>
       ${showCrypto ? `<div class="pay-sec">KRİPTO İLE ÖDE <span>${usd(p.usd)}</span></div>
       <div class="coins">${crypto.wallets.map((w) => `<button class="coin" data-wallet="${w.id}">
         <span class="coin-ico" style="--c:${esc(w.color)}">${esc(coinSym(w.label))}</span>
         <span><b>${esc(w.label)}</b><small>${esc(w.network)}</small></span></button>`).join('')}</div>` : ''}
       <button class="pay-cancel" data-close>Vazgeç</button>`);
     $('#payStars').onclick = () => { closeSheet(); payStars(p); };
-    $('#sheet').querySelectorAll('[data-wallet]').forEach((b) => b.onclick = () => payCrypto(p, Number(b.dataset.wallet)));
-    $('#sheet').querySelectorAll('[data-bank-copy]').forEach(b => b.onclick=()=>copyText(b.dataset.bankCopy));
-    $('#sheet').querySelectorAll('[data-bank]').forEach(b => b.onclick=()=>payBank(p, Number(b.dataset.bank)));
+    $('#sheet').querySelectorAll('[data-wallet]').forEach(b=>b.onclick=()=>payCrypto(p,Number(b.dataset.wallet)));
+
+    // Önceden gelen aktif IBAN'ları anında göster; aynı anda en güncel bankaları
+    // yeniden al. Bu talep yavaşlasa/başarısız olsa bile alışveriş penceresi
+    // ve Stars/kripto butonları kullanılabilir kalır.
+    const renderBankOptions = (banks, isLoading) => {
+      const container = $('#bankCheckoutMethods');
+      if (!container || container.dataset.dialog !== String(dialogVersion)) return;
+      if (!(Number(p.usd) > 0)) {
+        container.innerHTML = '';
+        return;
+      }
+      const choices = Array.isArray(banks) ? banks.filter(b =>
+        b && b.id && b.bank_name && b.holder && /^TR[0-9]{24}$/.test(String(b.iban||''))) : [];
+      container.innerHTML = choices.length
+        ? `<div class="pay-sec">🏦 BANKA HAVALESİ / EFT <span>TL</span></div>
+           <p class="bank-choose-note">Banka seçerek bu pakete ait TL tutarını ve havale açıklama kodunu oluştur.</p>
+           <div class="bank-choices">${choices.map(b=>`<div class="bank-option">
+             <div class="bank-option-name">🏦 ${esc(b.bank_name)}</div>
+             <small>Alıcı: ${esc(b.holder)}</small>
+             <div class="bank-iban-row"><code>${esc(b.iban.replace(/(.{4})/g,'$1 ').trim())}</code>
+               <button type="button" data-bank-copy="${esc(b.iban)}" aria-label="IBAN kopyala">${copySvg}</button></div>
+             <button class="bank-select" type="button" data-bank="${Number(b.id)}">BU BANKA İLE TL ÖDE</button>
+           </div>`).join('')}</div>`
+        : isLoading
+          ? '<p class="bank-choose-note" role="status">🏦 Aktif banka hesapları kontrol ediliyor…</p>'
+          : '';
+      container.querySelectorAll('[data-bank-copy]').forEach(b=>b.onclick=()=>copyText(b.dataset.bankCopy));
+      container.querySelectorAll('[data-bank]').forEach(b=>b.onclick=()=>payBank(p,Number(b.dataset.bank)));
+    };
+    renderBankOptions(bankAccounts, bankAccounts.length === 0);
+    // Banka sorgusu ışıksız çalışır, satın alma ekranının açılmasını geciktirmez.
+    void api('banks_active').then(j=>{
+      bankAccounts=j.bank_accounts||[];
+      renderBankOptions(bankAccounts,false);
+    }).catch(err=>{
+      console.warn('[bank payment choices]',err.message);
+      renderBankOptions(bankAccounts,false);
+    });
   }
 
   function payBank(p, bankId) {
