@@ -238,6 +238,29 @@
       });
     },
 
+    async banks(editId) {
+      const j = await api('banks');
+      const rows = j.banks.map(b => `<tr>
+        <td>${b.sort}</td><td><b>${esc(b.bank_name)}</b></td><td>${esc(b.holder||'—')}</td>
+        <td class="mono">${b.iban ? esc(b.iban.slice(0,6)+'…'+b.iban.slice(-4)) : 'IBAN girilmedi'}</td>
+        <td>${b.enabled ? 'Bilgiler hazır' : 'Kapalı'}</td>
+        <td><a href="#banks/${b.id}">Düzenle</a></td></tr>`).join('');
+      const e = j.banks.find(x=>String(x.id)===editId) ||
+        {id:0,bank_name:'',holder:'',iban:'',sort:j.banks.length+1,enabled:0};
+      page(`<h1>TL Banka Hesapları</h1>
+        <p class="hint">Banka adı şablonları IBAN değildir. Gerçek banka hesabı açılmış ve TL ödeme mutabakatı kurulmuş olmadıkça oyuncudan transfer istemeyin. Bu ekran yalnızca hesap bilgilerini yönetir; TL ödeme onayı ve paket teslimi yapmaz.</p>
+        <table><tr><th>Sıra</th><th>Banka</th><th>Alıcı</th><th>IBAN</th><th>Durum</th><th></th></tr>${rows}</table>
+        <h2>${e.id?'Banka bilgisi düzenle':'Yeni banka ekle'}</h2>
+        <form class="card form" id="bf"><input type="hidden" name="id" value="${e.id}">
+          ${field('Banka adı','bank_name',e.bank_name,'text','required')}
+          ${field('Hesap sahibi (gerçek alıcı adı)','holder',e.holder)}
+          ${field('TR IBAN','iban',e.iban,'text','placeholder="TR..." maxlength="34"')}
+          ${field('Sıra','sort',e.sort,'number')}
+          ${check('Banka bilgileri hazır','enabled',e.enabled)}
+          <button>Kaydet</button></form>`,j.dev);
+      bindForm('#bf','bank_save',()=>{location.hash='banks';route();});
+    },
+
     async wallets(editId) {
       const j = await api('wallets');
       const rows = j.wallets.map((w) => `<tr><td>${w.sort}</td><td><span class="dot" style="background:${esc(w.color)}"></span> <b>${esc(w.label)}</b></td><td>${esc(w.network)}</td>
