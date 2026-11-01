@@ -1,5 +1,5 @@
 import { tx } from '../lib/db.js';
-import { env, tg, verifyInitData, refLink, botUsername } from '../lib/tg.js';
+import { env, tg, verifyInitData, refLink, botUsername, parseReferralCode } from '../lib/tg.js';
 import * as G from '../lib/game.js';
 import { activeWallets, createWalletInvoice, submitWalletInvoice, notifyAdminsSubmitted, publicInvoice } from '../lib/wallet.js';
 import * as R from '../lib/rewards.js';
@@ -31,7 +31,11 @@ export default async function handler(req, res) {
       }
       const s = await G.loadSettings(c);
       if (s.maintenance > 0) throw new G.GameError('Bakım çalışması yapılıyor, birazdan tekrar dene.');
-      let u = await G.ensureUser(c, s, tgUser, tgUser.start_param);
+      // /start=rID ile botta açılan Mini App, Telegram initData.start_param göndermeyebilir.
+      // Bu yüzden yalnızca doğrulanmış Telegram kullanıcısının ref kodunu
+      // Mini App bağlantısının URL'sinden de al.
+      const referral = parseReferralCode(tgUser.start_param) || parseReferralCode(body.ref);
+      let u = await G.ensureUser(c, s, tgUser, referral);
       if (u.banned) throw new G.GameError('Hesabın askıya alındı.');
       const extra = {};
       const migrated = await G.migrateLegacyCoins(c, u);
@@ -86,9 +90,15 @@ export default async function handler(req, res) {
         case 'friends': {
           const list = (await c.query('SELECT first_name, username, started, oil_total FROM users WHERE ref_by = $1 ORDER BY created_at DESC LIMIT 100', [u.id])).rows;
           const cnt = (await c.query('SELECT COUNT(*)::int AS total, COALESCE(SUM(started),0)::int AS active FROM users WHERE ref_by = $1', [u.id])).rows[0];
+          const carry = (await c.query('SELECT micro_usd FROM referral_commission_carry WHERE user_id=$1', [u.id])).rows[0];
+          const fixedRewards = (await c.query('SELECT COALESCE(SUM(amount),0)::float AS total FROM referral_rewards WHERE referrer_id=$1', [u.id])).rows[0];
           extra.friends = {
             link: await refLink(u.id), total: cnt.total, active: cnt.active,
-            earned: Math.round(u.ref_earned * 100) / 100, ref_power: s.ref_power, ref_share: s.ref_share, ref_rates:G.referralRates(s), ref_depth:9,
+            earned: Math.round((Number(u.ref_earned || 0) + Number(fixedRewards?.total || 0)) * 100) / 100,
+            pending_commission_usd: Number(carry?.micro_usd || 0) / 1000000,
+            ref_reward_days: Number(s.ref_reward_days) || 7,
+            ref_reward_usd: Number(s.ref_reward_usd) || 0,
+            ref_power: s.ref_power, ref_share: s.ref_share, ref_rates:G.referralRates(s), ref_depth:9,
             list: list.map((f) => ({ name: f.first_name || f.username || 'Oyuncu', active: !!f.started, oil: Math.round(f.oil_total * 10) / 10 })),
           };
           break;

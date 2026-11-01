@@ -965,3 +965,17 @@ main { flex: 1; position: relative; min-height: 0; }
   font-weight: 800;
   overflow-wrap: anywhere;
 }
+
+/* Davet kazancının kuruş altı tutarlarını açıklayan okunabilir alan. */
+.ref-pending {
+  margin: 10px 0 4px;
+  padding: 9px 11px;
+  border-radius: 11px;
+  color: #cce8bc;
+  background: rgba(31, 80, 45, .28);
+  border: 1px solid rgba(120, 188, 116, .3);
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
