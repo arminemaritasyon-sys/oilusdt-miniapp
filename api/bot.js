@@ -61,18 +61,27 @@ export default async function handler(req, res) {
     const text = String(msg.text || '').trim();
 
     // 3) /start [davet kodu]
-    if (text.startsWith('/start')) {
-      const param = text.slice(6).trim() || null;
-      await tx(async (c) => G.ensureUser(c, await G.loadSettings(c), from, param));
+    if (text.split(/\\s+/)[0].split('@')[0] === '/start') {
+      const param = text.split(/\\s+/).slice(1).join(' ').trim() || null;
+      // Veritabanı geçici olarak ulaşılamasa da /start komutu yanıtsız kalmasın.
+      try {
+        await tx(async (c) => G.ensureUser(c, await G.loadSettings(c), from, param));
+      } catch (dbError) {
+        console.error('[bot] start-registration', dbError);
+      }
+      const caption = '💰 Petrolünü sat: Gelir elde et.';
+      const keyboard = webappKeyboard(req, '🎮 Oyna');
       const sent = await tg('sendVideo', {
         chat_id: chatId,
-        video: process.env.START_VIDEO_URL || 'https://d2ol7oe51mr4n9.cloudfront.net/user_2wVprG5dCQ1hAex3KVSFlkxrHXr/021aeff1-77ab-4c5e-95d3-53c5867ea74a.mp4',
-        caption: '💰 Petrolünü sat: Gelir elde et.',
+        video: process.env.START_VIDEO_URL || 'https://d2ol7oe51mr4n9.cloudfront.net/user_2wVprG5dCQ1hAex3KVSFlkxrHXr/6e302fdc-a57f-462a-b620-260c37fa1968.mp4',
+        caption,
         supports_streaming: true,
-        reply_markup: webappKeyboard(req, '🎮 Oyna'),
+        reply_markup: keyboard,
       });
       if (!sent.ok) {
-        throw new Error('Telegram karşılama videosu gönderilemedi: ' + (sent.description || 'Bilinmeyen hata'));
+        console.error('[bot] start-video', sent.description || 'Bilinmeyen video hatası');
+        const fallback = await tg('sendMessage', { chat_id: chatId, text: caption, reply_markup: keyboard });
+        if (!fallback.ok) throw new Error('Telegram /start yanıtı gönderilemedi: ' + (fallback.description || 'Bilinmeyen hata'));
       }
     } else if (text === '/paysupport') {
       await tg('sendMessage', { chat_id: chatId, text: 'Ödemeyle ilgili bir sorun yaşadıysan bu sohbete yaz; ekibimiz en kısa sürede dönüş yapacak.' });
