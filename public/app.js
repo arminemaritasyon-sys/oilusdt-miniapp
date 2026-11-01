@@ -537,16 +537,15 @@
       const list = el('div', 'ladder');
       for (const p of ladder) {
         const gain = p.amount * (S?.first_buy ? 1 + S.first_bonus : 1);
-        // Paket kartı: satın alınacak baz gücün 24 saatlik üretim katkısı.
-        // İlk alışveriş +%30 güç ve seviye çarpanı ayrıca etki eder.
-        const dailyPackOil = (Number(p.amount) / 1000) * 24 * (Number(S?.package_oil_per_kpower_hour) || 0.00625);
-        const salePrice = Number(S?.oil_price);
-        // USD karşılığı = petrol üretimi × sunucunun petrol satış fiyatı.
-        const dailyPackUsd = Number.isFinite(salePrice) && salePrice > 0
-          ? dailyPackOil * salePrice : null;
-        const usdCaption = dailyPackUsd === null
-          ? 'USD tahmini alınamadı'
-          : '≈ +' + fmt(dailyPackUsd, 2) + ' USD / 24 saat';
+        // Sunucunun ürettiği gerçek petrol miktarını göster.
+        // USD dönüşümü farklı bir finansal kalemdir; bu alanda gerçekte
+        // üretilmeyen veya garanti edilmeyen USD tutarları yazılmaz.
+        const oilRate = Number(S?.package_oil_per_kpower_hour);
+        const dailyPackOil = Number.isFinite(oilRate) && oilRate >= 0
+          ? (Number(p.amount) / 1000) * 24 * oilRate : null;
+        const productionLabel = dailyPackOil === null
+          ? 'Üretim oranı alınamadı'
+          : '+' + fmt(dailyPackOil, 2) + ' petrol / 24 saat';
         const state = p.locked ? 'locked' : p.step === nextStep ? 'next' : p.owned ? 'owned' : '';
         const badge = p.locked ? '' : p.step === nextStep ? '<span class="ribbon">ŞİMDİ AÇIK</span>' : p.owned ? `<span class="ribbon owned">✓ Alındı${p.owned > 1 ? ' ×' + p.owned : ''}</span>` : '';
         const card = el('div', 'tier ' + state, `
@@ -555,7 +554,7 @@
           <div class="tier-body">
             <b>${esc(p.title)}</b>
             <span class="gain">+${fmt(gain)} güç</span>
-            <small class="tier-daily-usd">${usdCaption}</small>
+            <small class="tier-daily-usd">${productionLabel}</small>
             ${p.locked ? `<small class="req">Önce “${esc(p.requires)}” paketini al</small>` : ''}
           </div>
           <button class="price ${p.locked ? 'is-locked' : ''}">${p.locked ? 'Kilitli' : priceLabel(p)}</button>`);
