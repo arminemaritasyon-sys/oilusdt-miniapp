@@ -531,3 +531,19 @@ main { flex: 1; position: relative; min-height: 0; }
 .ref-earn-level { display: inline-flex; align-items: center; gap: 9px; color: #e5ebfb; font-size: 13px; font-weight: 700; }
 .ref-earn-index { display: inline-flex; align-items: center; justify-content: center; width: 23px; height: 23px; border-radius: 50%; color: #0b1d36; background: #c2d2ed; font-size: 11px; font-weight: 900; }
 .ref-earn-list strong { color: #ffd479; font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; }
+
+/* GRAM (eski TON) canlı tahmini karşılığı: USD asıl bakiye olarak kalır */
+.chip.money { min-width: 0; max-width: min(71vw, 275px); padding: 6px 9px 6px 6px; gap: 6px; }
+.chip.money .bill { width: 28px; flex: 0 0 28px; }
+.gram-balance { min-width: 0; }
+.chip .gram-balance small { font-size: 9px; letter-spacing: 0; }
+.chip .gram-balance b { font-size: clamp(9px, 2.65vw, 15px); line-height: 1.25; white-space: nowrap; letter-spacing: -.017em; }
+.chip .gram-balance #coinUsdEquivalent { color: #d2c2b2; font-size: 10px; display: block; margin-top: 2px; }
+.tl-bank-card { margin-top: 14px; padding: 14px; }
+.tl-bank-card h3 { margin: 0 0 6px; font-size: 17px; }
+.tl-bank-card p { font-size: 12px; line-height: 1.5; color: #ccbbaa; margin: 5px 0 12px; }
+.tl-banks { display: grid; gap: 7px; }
+.tl-bank-row { padding: 10px 12px; display: flex; justify-content: space-between; gap: 9px; align-items: center; background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; }
+.tl-bank-row span { font-weight: 700; font-size: 13px; }
+.tl-bank-row small { color: #c7b6a7; font-size: 10px; white-space: nowrap; }
+.coin.unavailable { opacity: .52; cursor: not-allowed; }

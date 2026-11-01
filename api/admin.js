@@ -193,6 +193,23 @@ async function run(b, req) {
       return { msg: `Mesaj ${chat} grubuna gönderildi${b.pin ? ' ve sabitlendi' : ''}.` };
     }
 
+    case 'banks':
+      return { banks: await query('SELECT * FROM bank_accounts ORDER BY sort,id') };
+
+    case 'bank_save': {
+      const id = Math.floor(Number(b.id) || 0);
+      const name = String(b.bank_name || '').trim().slice(0, 80);
+      const holder = String(b.holder || '').trim().slice(0, 120);
+      const iban = String(b.iban || '').replace(/\s+/g, '').toUpperCase();
+      if (!name) throw new Error('Banka adı gerekli.');
+      if (iban && !/^TR\d{24}$/.test(iban)) throw new Error('IBAN TR ile başlayan 26 karakterli olmalıdır.');
+      if (b.enabled && (!holder || !iban)) throw new Error('Aktif hesap için alıcı adı ve gerçek IBAN gerekli.');
+      const row = [name,holder,iban,Math.floor(Number(b.sort)||0),b.enabled?1:0];
+      if(id) await query('UPDATE bank_accounts SET bank_name=$1, holder=$2, iban=$3, sort=$4, enabled=$5 WHERE id=$6',[...row,id]);
+      else await query('INSERT INTO bank_accounts(bank_name,holder,iban,sort,enabled) VALUES($1,$2,$3,$4,$5)',row);
+      return {msg:'Banka bilgileri kaydedildi. TL ödemeler otomatik olarak etkinleştirilmez.'};
+    }
+
     case 'wallets':
       return { wallets: await query('SELECT * FROM crypto_wallets ORDER BY sort, id') };
 

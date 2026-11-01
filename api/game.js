@@ -42,6 +42,7 @@ export default async function handler(req, res) {
           extra.products = await G.shopProducts(c, u.id);
           extra.bot = await botUsername();
           extra.crypto = { wallets: s.crypto_enabled > 0 ? await activeWallets(c) : [] };
+          extra.bank_accounts = (await c.query('SELECT id, bank_name, enabled FROM bank_accounts ORDER BY sort,id LIMIT 10')).rows;
           break;
         case 'start':
           await G.actStart(c, s, u, req);

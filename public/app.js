@@ -18,6 +18,34 @@
   let receivedAt = 0;    // durumun alındığı an (ms)
   let products = [];
   let crypto = { wallets: [] };
+  let bankAccounts = [];
+  let gramUsdPrice = null;
+  let gramPriceUpdatedAt = 0;
+  // Gramcoin (GRAM / eski TON) tutarı tahmini USD karşılığıdır;
+  // gerçek ödül defteri USD olarak kalır.
+  const gramNumber = (n) => Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 8, maximumFractionDigits: 8 });
+  function renderGramBalance() {
+    const usd = Math.max(0, Number(S?.balance) || 0);
+    $('#coinUsdEquivalent').textContent = 'USD bakiye: $' + fmt(usd, 2);
+    $('#coins').textContent = gramUsdPrice === null
+      ? 'GRAM kuru alınamadı'
+      : gramNumber(usd / gramUsdPrice) + ' GRAM';
+  }
+  async function refreshGramQuote() {
+    try {
+      const res = await fetch('/api/gram_quote', {cache:'no-store'});
+      if (!res.ok) throw new Error('GRAM kuru alınamadı');
+      const row = await res.json();
+      const rate = Number(row.usd_per_gram);
+      if (!Number.isFinite(rate) || rate <= 0) throw new Error('Geçersiz GRAM kuru');
+      gramUsdPrice = rate;
+      gramPriceUpdatedAt = Date.now();
+    } catch {
+      gramUsdPrice = null;
+      gramPriceUpdatedAt = 0;
+    }
+    if (S) renderGramBalance();
+  }
   let busy = false;
   let prefs = { haptic: true, sound: true, music: true };
   try { prefs = { ...prefs, ...JSON.parse(localStorage.getItem('op-prefs') || '{}') }; } catch {}
@@ -223,7 +251,7 @@
 
   function render() {
     if (!S) return;
-    $('#coins').textContent = '$' + fmt(S.balance ?? 0, 2);
+    renderGramBalance();
     $('#power').textContent = fmt(S.power);
     $('#levelBadge').textContent = 'Seviye ' + S.level;
     $('#rateBadge').textContent = S.starter_drill_oil_24h != null
@@ -473,6 +501,16 @@
     const box = $('#products');
     box.innerHTML = '';
     if (!products.length) { box.append(el('div', 'empty', 'Şu anda satışta ürün yok.')); return; }
+    const bankSection = $('#bankTransferSection');
+    if (bankSection) {
+      const banks = bankAccounts.slice(0,5);
+      bankSection.innerHTML = `<div class="card tl-bank-card">
+        <h3>₺ TL · Banka hesapları</h3>
+        <p>TL havale/EFT ile ödeme henüz etkin değil. Banka listesi ödeme talimatı değildir.</p>
+        <div class="tl-banks">${banks.map(b=>`<div class="tl-bank-row">
+          <span>🏦 ${esc(b.bank_name)}</span><small>Henüz aktif değil</small>
+        </div>`).join('')}</div></div>`;
+    }
 
     // Her oyuncunun gerçek sunucu üretim hızından 24 saatlik petrol hesabı.
     const hourRate = Math.max(0, Number(S?.rate_hour) || 0);
@@ -541,7 +579,7 @@
   }
 
   /* ---------- Ödeme yöntemi ---------- */
-  const SYMBOLS = { USDT: '₮', USDC: '$', TRON: '▼', TRX: '▼', TON: '◆', BTC: '₿', BITCOIN: '₿', ETH: 'Ξ', ETHEREUM: 'Ξ', LTC: 'Ł', LITECOIN: 'Ł', BNB: '◈', SOL: '≡', SOLANA: '≡', DOGE: 'Ð', XRP: '✕' };
+  const SYMBOLS = { GRAMCOIN: '◈', 'BNB COIN': '⬡', TRONCOIN: '▼', USDT: '₮', USDC: '$', TRON: '▼', TRX: '▼', TON: '◆', BTC: '₿', BITCOIN: '₿', ETH: 'Ξ', ETHEREUM: 'Ξ', LTC: 'Ł', LITECOIN: 'Ł', BNB: '◈', SOL: '≡', SOLANA: '≡', DOGE: 'Ð', XRP: '✕' };
   const coinSym = (label) => SYMBOLS[String(label).toUpperCase()] || String(label)[0] || '?';
   const usd = (n) => '$' + fmt(n, 2);
   const copySvg = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 8h11v13H8Zm-4-5h11v3H7v11H4Z"/></svg>';
@@ -906,8 +944,13 @@
     const min = Math.max(10, r.min, net.min_usd || 0);
     sheet(`<h2>Çekim</h2>
       <div class="pay-sec">ÇEKİLEBİLİR BAKİYE <span>${money(r.balance)}</span></div><div class="pay-sec">YÖNTEM SEÇ</div>
-      <div class="coins">${r.networks.map((n) => `<button class="coin${n.id === wdNet ? ' sel' : ''}" data-net="${n.id}">
-        <span class="coin-ico" style="--c:${esc(n.color)}">${esc(coinSym(n.label))}</span><span><b>${esc(n.label)}</b><small>${esc(n.network)}</small></span></button>`).join('')}</div>
+      <div class="coins">${(r.display_networks || r.networks).map((n) => `<button
+        class="coin${n.id === wdNet ? ' sel' : ''}${!n.enabled ? ' unavailable' : ''}"
+        ${n.enabled ? `data-net="${n.id}"` : 'disabled aria-disabled="true"'}>
+        <span class="coin-ico" style="--c:${esc(n.color)}">${esc(coinSym(n.label))}</span>
+        <span><b>${esc(n.label)}</b><small>${esc(n.network)}${!n.enabled ? ' · Yakında' : ''}</small></span>
+      </button>`).join('')}</div>
+      <p class="wd-info">Talep tutarı USD'dir. Ödenecek coin tutarı ödeme günündeki kura ve ağ masrafına bağlıdır.</p>
       <input id="wdAddr" class="wd-input mono" placeholder="${esc(net.label)} ${esc(net.network)} cüzdan adresin" autocomplete="off" style="margin-top:12px">
       <div class="wd-amt"><input id="wdAmt" class="wd-input" type="number" step="0.01" min="${min}" placeholder="Tutar ($)"><button class="wd-max" id="wdMax">MAKS</button></div>
       <p class="wd-info" id="wdInfo"></p>
@@ -1015,6 +1058,7 @@
           const fresh = await api('init');
           products = fresh.products || [];
           crypto = fresh.crypto || { wallets: [] };
+          bankAccounts = fresh.bank_accounts || [];
           show('pump');
           toast('Hesabın silindi. Yeni hesabın başlangıç seviyesinden açıldı.');
         } catch (e) {
@@ -1057,6 +1101,8 @@
       const j = await api('init');
       products = j.products;
       crypto = j.crypto || crypto;
+      bankAccounts = j.bank_accounts || [];
+      refreshGramQuote();
       $('#loader').classList.add('out');
       setTimeout(() => $('#loader').classList.add('hidden'), 400);
     } catch (e) {
@@ -1067,7 +1113,8 @@
   // Uygulama arka plandan dönünce durumu tazele
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stopMusic(); else startMusic();
-    if (!document.hidden && S) api('init').then((j) => { products = j.products; crypto = j.crypto || crypto; }).catch(() => {});
+    if (!document.hidden && S) api('init').then((j) => { products = j.products; crypto = j.crypto || crypto; bankAccounts = j.bank_accounts || bankAccounts; }).catch(() => {});
+    if (!document.hidden && (!gramPriceUpdatedAt || Date.now()-gramPriceUpdatedAt > 300000)) refreshGramQuote();
   });
 
   boot();
