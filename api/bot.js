@@ -70,7 +70,7 @@ export default async function handler(req, res) {
         console.error('[bot] start-registration', dbError);
       }
       const caption = '💰 Petrolünü sat: Gelir elde et.';
-      const keyboard = webappKeyboard(req, '🎮 Oyna');
+      const keyboard = webappKeyboard(req, '🎮 Oyna', param);
       const sent = await tg('sendVideo', {
         chat_id: chatId,
         video: process.env.START_VIDEO_URL || 'https://d2ol7oe51mr4n9.cloudfront.net/user_2wVprG5dCQ1hAex3KVSFlkxrHXr/ad1e5dae-ed45-47ff-90d9-1e9a47eb452a.mp4',
