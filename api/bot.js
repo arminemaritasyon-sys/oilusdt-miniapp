@@ -1,5 +1,5 @@
 import { tx } from '../lib/db.js';
-import { env, tg, webappKeyboard, safeEqual, escHtml } from '../lib/tg.js';
+import { env, tg, webappKeyboard, safeEqual } from '../lib/tg.js';
 import * as G from '../lib/game.js';
 import { faqAnswer, faqMenu } from '../lib/faq.js';
 
@@ -64,18 +64,16 @@ export default async function handler(req, res) {
     if (text.startsWith('/start')) {
       const param = text.slice(6).trim() || null;
       await tx(async (c) => G.ensureUser(c, await G.loadSettings(c), from, param));
-      await tg('sendMessage', {
+      const sent = await tg('sendVideo', {
         chat_id: chatId,
-        parse_mode: 'HTML',
-        text: `🛢 <b>Oil Pump'a hoş geldin, ${escHtml(from.first_name)}!</b>\n\n`
-          + '⚙️ Pompanı çalıştır, petrol kendiliğinden çıksın.\n'
-          + '💰 Petrolünü sat, oyun parası kazan.\n'
-          + '📈 Pompanı yükselt, daha çok üret.\n'
-          + '👥 Arkadaşlarını davet et, ekibini büyüt.\n\n'
-          + '❓ Sorun mu var? Bana yaz, örneğin <i>"Nasıl kazanırım?"</i> ya da /sss\n\n'
-          + '👇 Başlamak için dokun:',
-        reply_markup: webappKeyboard(req, '🛢 Pompayı Başlat'),
+        video: process.env.START_VIDEO_URL || 'https://d2ol7oe51mr4n9.cloudfront.net/user_2wVprG5dCQ1hAex3KVSFlkxrHXr/021aeff1-77ab-4c5e-95d3-53c5867ea74a.mp4',
+        caption: '💰 Petrolünü sat: Gelir elde et.',
+        supports_streaming: true,
+        reply_markup: webappKeyboard(req, '🎮 Oyna'),
       });
+      if (!sent.ok) {
+        throw new Error('Telegram karşılama videosu gönderilemedi: ' + (sent.description || 'Bilinmeyen hata'));
+      }
     } else if (text === '/paysupport') {
       await tg('sendMessage', { chat_id: chatId, text: 'Ödemeyle ilgili bir sorun yaşadıysan bu sohbete yaz; ekibimiz en kısa sürede dönüş yapacak.' });
     } else if (['/sss', '/help', '/yardim'].includes(text.split(/[\s@]/)[0])) {
