@@ -900,3 +900,18 @@ main { flex: 1; position: relative; min-height: 0; }
   #sheet .payment-options-grid .coin.bank-payment-card,
   #sheet .payment-options-grid .coin.payment-method-card { padding: 6px 3px; gap: 4px; }
 }
+
+/* Mağaza paketinde gerçek petrol üretimi + oyun içi satış fiyatından USD değeri. */
+.tier-body .tier-daily-oil {
+  color: #f4dfbb;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.tier-body .tier-daily-usd {
+  color: #b7eab4;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(10px, 2.9vw, 12px);
+  line-height: 1.32;
+  overflow-wrap: anywhere;
+}
