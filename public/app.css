@@ -587,3 +587,9 @@ main { flex: 1; position: relative; min-height: 0; }
  .bank-option { padding: 9px; }
  .bank-iban-row code { font-size: 11px; }
 }
+
+/* Paket kartının tamamı tıklanabilir; ödeme penceresi dokunmaya hemen yanıt verir. */
+.tier:not(.locked), .extra { cursor: pointer; touch-action: manipulation; }
+.tier:not(.locked):active, .extra:active { transform: scale(.992); }
+.tier:focus-visible, .extra:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.tier .price, .extra .price { cursor: pointer; touch-action: manipulation; }
