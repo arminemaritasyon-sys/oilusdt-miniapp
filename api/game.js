@@ -5,6 +5,7 @@ import { activeWallets, createWalletInvoice, submitWalletInvoice, notifyAdminsSu
 import * as R from '../lib/rewards.js';
 import { notifyWithdrawalGroup } from '../lib/payout_announcements.js';
 import { deletePlayerAccount } from '../lib/account_deletion.js';
+import { activeBanks, createBankInvoice, submitBankInvoice, publicBankInvoice, notifyAdminsBankInvoice } from '../lib/bank_payments.js';
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -42,7 +43,7 @@ export default async function handler(req, res) {
           extra.products = await G.shopProducts(c, u.id);
           extra.bot = await botUsername();
           extra.crypto = { wallets: s.crypto_enabled > 0 ? await activeWallets(c) : [] };
-          extra.bank_accounts = (await c.query('SELECT id, bank_name, enabled FROM bank_accounts ORDER BY sort,id LIMIT 10')).rows;
+          extra.bank_accounts = await activeBanks(c);
           break;
         case 'start':
           await G.actStart(c, s, u, req);
@@ -122,6 +123,38 @@ export default async function handler(req, res) {
           });
           if (!r.ok) throw new G.GameError('Ödeme bağlantısı oluşturulamadı.');
           extra.link = r.result;
+          break;
+        }
+        case 'banks_active':
+          // Aynı oturum içinde aktif edilen IBANları en güncel haliyle getir.
+          extra.bank_accounts = await activeBanks(c);
+          break;
+        case 'bank_invoice': {
+          const p = (await G.shopProducts(c,u.id)).find(p=>p.id===Number(body.id));
+          if (!p) throw new G.GameError('Ürün bulunamadı.');
+          if (p.locked) throw new G.GameError('Bu paket kilitli.');
+          extra.bank_invoice = await createBankInvoice(c,u,p,Number(body.bank)||0);
+          break;
+        }
+        case 'bank_submit': {
+          const r = await submitBankInvoice(c,u,Number(body.invoice_id)||0,body.payer_name,body.receipt_reference);
+          extra.bank_invoice = r.invoice;
+          if (r.notify) {
+            const p = await G.findProduct(c,r.notify.product_id,false);
+            extra.bank_notify = {row:r.notify,title:p?.title};
+          }
+          break;
+        }
+        case 'bank_status': {
+          const row = (await c.query(
+            'SELECT * FROM bank_invoices WHERE id=$1 AND user_id=$2',
+            [Number(body.invoice_id)||0,u.id])).rows[0];
+          if (!row) throw new G.GameError('Banka siparişi bulunamadı.');
+          extra.bank_invoice = publicBankInvoice(row);
+          if (row.status === 'paid') {
+            u = await G.findUser(c,u.id,true);
+            extra.products = await G.shopProducts(c,u.id);
+          }
           break;
         }
         case 'crypto_invoice': {
