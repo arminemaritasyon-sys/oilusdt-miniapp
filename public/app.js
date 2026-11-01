@@ -654,6 +654,7 @@
         <div class="payment-product-copy"><b>${esc(p.title)}</b><small>${gain}</small></div>
         <strong>${priceLabel(p)}</strong>
       </div>
+      <div class="payment-options-grid" role="group" aria-label="Ödeme yöntemleri">
       <div id="bankCheckoutMethods" class="payment-card-list" data-dialog="${dialogVersion}"></div>
       <button type="button" class="coin payment-method-card payment-stars-card" id="payStars">
         <span class="payment-icon stars-logo" aria-hidden="true">
@@ -674,6 +675,7 @@
         <span class="payment-option-copy"><b>${esc(w.label)}</b><small>${esc(w.network)}</small></span>
         <span class="method-arrow">›</span>
       </button>`).join('')}</div>` : ''}
+      </div>
       <button class="pay-cancel" data-close>Vazgeç</button>`);
     $('#payStars').onclick = () => { closeSheet(); payStars(p); };
     $('#sheet').querySelectorAll('[data-wallet]').forEach(b=>b.onclick=()=>payCrypto(p,Number(b.dataset.wallet)));
@@ -691,10 +693,10 @@
       const choices = Array.isArray(banks) ? banks.filter(b =>
         b && b.id && b.bank_name && b.holder && /^TR[0-9]{24}$/.test(String(b.iban||''))) : [];
       container.innerHTML = choices.length
-        ? choices.map(b => `<button type="button" class="coin bank-payment-card" data-bank="${Number(b.id)}">
+        ? choices.map(b => `<button type="button" class="coin bank-payment-card" data-bank="${Number(b.id)}" aria-label="${esc(b.bank_name)} ile TL ödeme">
              ${bankMark(b.bank_name)}
              <span class="bank-option-text"><b>${esc(b.bank_name)}</b>
-               <small>${p.type === 'power' ? 'IBAN ile +%10 güç bonusu' : 'TL Havale / EFT'}</small></span>
+               <small>${p.type === 'power' ? 'IBAN +%10 güç' : 'TL Havale'}</small></span>
              ${p.type === 'power' ? '<em class="bank-bonus-pill">+%10</em>' : ''}
              <span class="method-arrow">›</span>
            </button>`).join('')
