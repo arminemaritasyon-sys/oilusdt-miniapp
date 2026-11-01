@@ -639,7 +639,7 @@
       </div>
       <div id="bankCheckoutMethods" class="payment-card-list" data-dialog="${dialogVersion}"></div>
       <button type="button" class="coin payment-method-card payment-stars-card" id="payStars">
-        <span class="payment-icon stars stars-logo" aria-hidden="true">
+        <span class="payment-icon stars-logo" aria-hidden="true">
           <svg class="stars-symbol" viewBox="0 0 48 48" focusable="false">
             <path d="M24 3.5 30.1 16.2 44.1 18.2 34 28.2 36.4 42.5 24 35.7 11.6 42.5 14 28.2 3.9 18.2 17.9 16.2Z"
               fill="#FFD85A" stroke="#F29F1C" stroke-width="2.5" stroke-linejoin="round"/>
