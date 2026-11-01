@@ -738,3 +738,52 @@ main { flex: 1; position: relative; min-height: 0; }
   .tier .pr-usd { font-size: 16px; }
   .tier .pr-st { font-size: 10px; }
 }
+
+/* Mağaza lacivert üretim kutusu: petrol / 24 saat sayı yanında tek satır. */
+.shop-hero {
+  grid-template-columns: minmax(0,.72fr) minmax(0,1.85fr) minmax(0,.55fr);
+  column-gap: 4px;
+  padding: 12px 7px;
+}
+.shop-hero > div { min-width: 0; }
+.shop-production-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.shop-hero .shop-production-line .shop-daily {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: clamp(10px, 2.85vw, 16px);
+  line-height: 1.25;
+  letter-spacing: -.03em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+.shop-hero .shop-production-line span {
+  display: inline-block;
+  flex: 0 0 auto;
+  font-size: clamp(9px, 2.45vw, 12px);
+  color: #d7e5fa;
+  font-weight: 750;
+  letter-spacing: -.025em;
+}
+.tier .tier-daily-usd {
+  font-variant-numeric: tabular-nums;
+  color: #c4f0b4;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+/* Yan sütunlardaki yüksek güç değerleri üretim sütununu sıkıştırmaz. */
+.shop-hero > div:not(.shop-production) > b {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(11px, 2.9vw, 18px);
+}

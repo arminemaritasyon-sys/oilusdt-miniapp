@@ -249,14 +249,29 @@
     });
   }
 
+  // Petrol sayfası ve mağaza aynı 24 saatlik üretim tahminini kullanır.
+  // Aktif Turbo'nun kalan süresi hesaba katılır; yalnızca görünümü etkiler.
+  function dailyOilProduction() {
+    const hourRate = Math.max(0, Number(S?.rate_hour) || 0);
+    const boostMult = Number(S?.boost_mult) || 1;
+    const boostActive = Number(S?.boost_until) > serverNow() && boostMult > 1;
+    const baseHourRate = boostActive ? hourRate / boostMult : hourRate;
+    const boostHoursLeft = boostActive
+      ? Math.min(24, Math.max(0, (Number(S.boost_until) - serverNow()) / 3600)) : 0;
+    return baseHourRate * (24 + boostHoursLeft * (boostActive ? boostMult - 1 : 0));
+  }
+
   function render() {
     if (!S) return;
     renderGramBalance();
     $('#power').textContent = fmt(S.power);
     $('#levelBadge').textContent = 'Seviye ' + S.level;
-    $('#rateBadge').textContent = S.starter_drill_oil_24h != null
-      ? '🛢 24 saatte ' + fmt(S.starter_drill_oil_24h, 2) + ' petrol'
-      : fmt(S.rate_hour, S.rate_hour < 10 ? 2 : 1) + ' petrol / saat';
+    const dailyUsdEstimate = S.starter_drill_usd_24h != null
+      ? Number(S.starter_drill_usd_24h)
+      : dailyOilProduction() * Math.max(0, Number(S.oil_price) || 0);
+    $('#rateBadge').textContent = Number.isFinite(dailyUsdEstimate)
+      ? '💵 24 saatte $' + fmt(dailyUsdEstimate, 2)
+      : '💵 24 saatlik USD hesaplanamadı';
     $('#turboBadge').classList.toggle('hidden', !S.boost_until);
     $('#turboBadge').textContent = 'TURBO x' + S.boost_mult;
     $('#btnUpgrade').disabled = S.upgrade_cost === null;
@@ -501,12 +516,8 @@
     const box = $('#products');
     box.innerHTML = '';
     if (!products.length) { box.append(el('div', 'empty', 'Şu anda satışta ürün yok.')); return; }
-    // Her oyuncunun gerçek sunucu üretim hızından 24 saatlik petrol hesabı.
-    const hourRate = Math.max(0, Number(S?.rate_hour) || 0);
-    const boostActive = Number(S?.boost_until) > serverNow() && Number(S?.boost_mult) > 1;
-    const baseHourRate = boostActive ? hourRate / Number(S.boost_mult) : hourRate;
-    const boostHoursLeft = boostActive ? Math.min(24, Math.max(0, (Number(S.boost_until) - serverNow()) / 3600)) : 0;
-    const dailyOil = baseHourRate * (24 + boostHoursLeft * (boostActive ? Number(S.boost_mult) - 1 : 0));
+    // 24 saatlik petrol tahmini, petrol ekranındaki hesapla aynıdır.
+    const dailyOil = dailyOilProduction();
     // Petrol miktarı ile $ değerini karıştırma: başlangıç oyuncusunda doğrudan
     // sunucunun belirlediği 24 saatlik üretim (0,05 petrol) gösterilir.
     const shownDailyOil = S?.starter_drill_oil_24h != null
@@ -514,7 +525,7 @@
     const dailyLabel = fmt(shownDailyOil, shownDailyOil > 0 && shownDailyOil < 0.01 ? 6 : 2);
     box.append(el('div', 'shop-hero', `
       <div><small>Gücün</small><b>⚡ ${fmt(S?.power || 0)}</b></div>
-      <div><small>Üretim</small><b class="shop-daily">🛢 ${dailyLabel}</b><i>petrol / 24 saat</i></div>
+      <div class="shop-production"><small>Üretim</small><div class="shop-production-line"><b class="shop-daily">🛢 ${dailyLabel}</b><span>petrol / 24 saat</span></div></div>
       <div><small>Seviye</small><b>${S?.level || 1}</b></div>`));
 
     const ladder = products.filter((p) => p.type === 'power');
@@ -529,6 +540,13 @@
         // Paket kartı: satın alınacak baz gücün 24 saatlik üretim katkısı.
         // İlk alışveriş +%30 güç ve seviye çarpanı ayrıca etki eder.
         const dailyPackOil = (Number(p.amount) / 1000) * 24 * (Number(S?.package_oil_per_kpower_hour) || 0.00625);
+        const salePrice = Number(S?.oil_price);
+        // USD karşılığı = petrol üretimi × sunucunun petrol satış fiyatı.
+        const dailyPackUsd = Number.isFinite(salePrice) && salePrice > 0
+          ? dailyPackOil * salePrice : null;
+        const usdCaption = dailyPackUsd === null
+          ? 'USD tahmini alınamadı'
+          : '≈ +' + fmt(dailyPackUsd, 2) + ' USD / 24 saat';
         const state = p.locked ? 'locked' : p.step === nextStep ? 'next' : p.owned ? 'owned' : '';
         const badge = p.locked ? '' : p.step === nextStep ? '<span class="ribbon">ŞİMDİ AÇIK</span>' : p.owned ? `<span class="ribbon owned">✓ Alındı${p.owned > 1 ? ' ×' + p.owned : ''}</span>` : '';
         const card = el('div', 'tier ' + state, `
@@ -537,7 +555,7 @@
           <div class="tier-body">
             <b>${esc(p.title)}</b>
             <span class="gain">+${fmt(gain)} güç</span>
-            <small>🛢 +${fmt(dailyPackOil, dailyPackOil < 10 ? 2 : 1)} petrol / 24 saat</small>
+            <small class="tier-daily-usd">💵 ${usdCaption}</small>
             ${p.locked ? `<small class="req">Önce “${esc(p.requires)}” paketini al</small>` : ''}
           </div>
           <button class="price ${p.locked ? 'is-locked' : ''}">${p.locked ? 'Kilitli' : priceLabel(p)}</button>`);
