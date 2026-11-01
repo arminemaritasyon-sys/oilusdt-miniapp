@@ -620,23 +620,28 @@
   const usd = (n) => '$' + fmt(n, 2);
   // Seçili paketin USD tutarını her açık kripto yöntemi için canlı kura çevir.
   // Ödeme siparişindeki kesin miktar aynı kur kaynağıyla sunucuda yeniden hesaplanır.
-  let cryptoQuoteCache = null;
-  let cryptoQuoteAt = 0;
-  let cryptoQuoteRequest = null;
-  async function loadCryptoQuotes() {
-    if (cryptoQuoteCache && Date.now() - cryptoQuoteAt < 60000) return cryptoQuoteCache;
-    if (cryptoQuoteRequest) return cryptoQuoteRequest;
-    cryptoQuoteRequest = (async () => {
-      const response = await fetch('/api/crypto_quote', { cache: 'no-store' });
+  const cryptoQuoteCache = new Map();
+  const cryptoQuoteRequests = new Map();
+  async function loadCryptoQuotes(usdAmount) {
+    const amount = Number(usdAmount);
+    if (!Number.isFinite(amount) || amount <= 0) throw new Error('Paket USD fiyatı geçersiz');
+    const key = amount.toFixed(2);
+    const cached = cryptoQuoteCache.get(key);
+    if (cached && Date.now() - cached.at < 30000) return cached.quotes;
+    if (cryptoQuoteRequests.has(key)) return cryptoQuoteRequests.get(key);
+    const request = (async () => {
+      const response = await fetch('/api/crypto_quote?usd=' + encodeURIComponent(key), { cache: 'no-store' });
       if (!response.ok) throw new Error('Kur servisine erişilemiyor');
       const json = await response.json();
-      if (!json.ok || !Array.isArray(json.quotes)) throw new Error('Kur bilgisi alınamadı');
-      cryptoQuoteCache = json.quotes;
-      cryptoQuoteAt = Date.now();
-      return cryptoQuoteCache;
+      if (!json.ok || !Array.isArray(json.quotes) || Number(json.usdAmount) !== Number(key)) {
+        throw new Error('Kur bilgisi alınamadı');
+      }
+      cryptoQuoteCache.set(key, { quotes: json.quotes, at: Date.now() });
+      return json.quotes;
     })();
-    try { return await cryptoQuoteRequest; }
-    finally { cryptoQuoteRequest = null; }
+    cryptoQuoteRequests.set(key, request);
+    try { return await request; }
+    finally { cryptoQuoteRequests.delete(key); }
   }
   function previewCoinAmount(usdAmount, quote) {
     const rate = Number(quote?.usdPerCoin);
@@ -651,11 +656,12 @@
       minimumFractionDigits: Math.min(precision, amount < 1 ? 6 : 2), useGrouping: false });
   }
   function updateCryptoEstimates(p, dialogVersion) {
-    loadCryptoQuotes().then(quotes => {
+    loadCryptoQuotes(p.usd).then(quotes => {
       if (purchaseDialogVersion !== dialogVersion) return;
       document.querySelectorAll('#sheet [data-crypto-estimate]').forEach(label => {
         const quote = quotes.find(q => Number(q.id) === Number(label.dataset.cryptoEstimate));
-        const value = previewCoinAmount(p.usd, quote);
+        const value = quote?.amount && Number(quote.amount) > 0
+          ? quote.amount : previewCoinAmount(p.usd, quote);
         label.textContent = value ? '≈ ' + value + ' ' + quote.label : 'Kur alınamadı';
         label.title = value ? '≈ ' + value + ' ' + quote.label + ' ('
           + fmt(p.usd, 2) + ' USD, CoinGecko anlık kur tahmini)' : 'Kur alınamadı';
@@ -870,6 +876,10 @@
     sheet(`
       <h2>KRİPTO PARAYI GÖNDER</h2>
       <div class="pay-field">
+        <small>PAKET FİYATI / KRİPTO KARŞILIĞI</small>
+        <div class="pay-usd-equivalent"><b>${fmt(Number(inv.usd), 2)} USD</b><span>≈ ${esc(inv.amount)} ${esc(inv.label)}</span></div>
+      </div>
+      <div class="pay-field">
         <small>CÜZDAN ADRESİ · ${tag}</small>
         <div class="copy-row"><code>${esc(inv.address)}</code><button class="copy-btn" data-copy="${esc(inv.address)}" aria-label="Adresi kopyala">${copySvg}</button></div>
       </div>
@@ -878,7 +888,7 @@
         <div class="copy-row"><b class="amt">${esc(inv.amount)}</b><button class="copy-btn" data-copy="${esc(inv.amount)}" aria-label="Tutarı kopyala">${copySvg}</button></div>
       </div>
       <div class="pay-status"><span class="pill" id="payState"></span><span id="payHint"></span></div>
-      <div class="pay-note">Bu adrese <b>tam olarak ${esc(inv.amount)} ${esc(inv.label)}</b> gönder${inv.network ? ` (<b>${esc(inv.network)}</b> ağı)` : ''}. Tutar farklı olursa ödemen eşleşmeyebilir. Gönderdikten sonra aşağıdaki butona bas; ödemen kontrol edilip onaylanınca <b>${esc(p.title)}</b> hesabına eklenir.</div>
+      <div class="pay-note">Bu paket <b>${fmt(Number(inv.usd), 2)} USD</b> değerindedir. Ödeme tutarı sipariş açılırken alınan kripto kuru ve küçük sipariş tanımlama farkına göre belirlenir. Bu adrese <b>tam olarak ${esc(inv.amount)} ${esc(inv.label)}</b> gönder${inv.network ? ` (<b>${esc(inv.network)}</b> ağı)` : ''}. Tutar farklı olursa ödemen eşleşmeyebilir. Gönderdikten sonra aşağıdaki butona bas; ödemen kontrol edilip onaylanınca <b>${esc(p.title)}</b> hesabına eklenir.</div>
       <div id="txArea"><input id="txHash" class="tx-input" placeholder="İşlem kodu (TX) – isteğe bağlı" value="${esc(inv.tx_hash || '')}"></div>
       <button class="btn green" id="sentBtn">ÖDEMEYİ GÖNDERDİM</button>
       <button class="pay-cancel" id="otherCoin">Başka coin seç</button>`);
