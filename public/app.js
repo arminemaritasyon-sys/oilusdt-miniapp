@@ -199,7 +199,11 @@
     $('#coins').textContent = '$' + fmt(S.balance ?? 0, 2);
     $('#power').textContent = fmt(S.power);
     $('#levelBadge').textContent = 'Seviye ' + S.level;
-    $('#rateBadge').textContent = fmt(S.rate_hour, S.rate_hour < 10 ? 2 : 1) + ' petrol / saat';
+    $('#rateBadge').textContent = fmt(S.rate_hour, S.rate_hour < 0.01 ? 7 : S.rate_hour < 10 ? 2 : 1) + ' petrol / saat';
+    const freeCap = $('#freeDailyBadge');
+    freeCap.classList.toggle('hidden', S.free_daily_oil_usd === null || S.free_daily_oil_usd === undefined);
+    if (S.free_daily_oil_usd !== null && S.free_daily_oil_usd !== undefined)
+      freeCap.textContent = 'Ücretsiz: günlük ' + fmt(S.free_daily_oil_usd, 2) + ' $ · Kalan ' + fmt(S.free_daily_remaining ?? S.free_daily_oil_usd, 2) + ' $';
     $('#turboBadge').classList.toggle('hidden', !S.boost_until);
     $('#turboBadge').textContent = 'TURBO x' + S.boost_mult;
     $('#btnUpgrade').disabled = S.upgrade_cost === null;
