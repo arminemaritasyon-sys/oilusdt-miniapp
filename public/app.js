@@ -1062,6 +1062,10 @@
       $('#fTotal').textContent = fmt(f.total);
       $('#fActive').textContent = fmt(f.active);
       $('#fEarned').textContent = short(f.earned);
+      const pending = Math.max(0, Number(f.pending_commission_usd) || 0);
+      $('#refPending').textContent = pending > 0
+        ? '⏳ Biriken komisyon: ' + fmt(pending, 6) + ' USD · 0,01 USD olunca ödül bakiyene eklenir.'
+        : 'ℹ️ Petrol satış komisyonları kuruş altında da birikir; 0,01 USD olduğunda bakiyene eklenir.';
       const refRates = Array.isArray(f.ref_rates) ? f.ref_rates.slice(0, 9) : [];
       // Yüzdeler sunucudaki gerçek referans oranlarından gelir; sabitlenmez.
       $('#refShareText').innerHTML = `
@@ -1074,7 +1078,8 @@
               <strong>%${Number((Number(rate) * 100).toFixed(2)).toLocaleString('tr-TR', { maximumFractionDigits: 2 })}</strong>
             </li>`).join('')}
         </ol>
-        <p class="ref-earn-foot">Bu kazançlar arkadaşlarının bakiyesinden kesilmez. Oranlar ilgili seviyedeki oyuncunun petrol satışına uygulanır.</p>`;
+        <p class="ref-earn-foot">Bu kazançlar arkadaşlarının bakiyesinden kesilmez. Oranlar ilgili seviyedeki oyuncunun petrol satışına uygulanır.</p>
+        ${Number(f.ref_reward_usd) > 0 ? `<p class="ref-earn-foot">🎁 Ayrıca davet ettiğin arkadaşın ${Number(f.ref_reward_days) || 7} farklı günde pompasını çalıştırınca, geçerli ödül limitleri kapsamında ${fmt(Number(f.ref_reward_usd), 2)} USD sabit referans ödülü kazanabilirsin.</p>` : ''}`;
       const list = $('#friendList');
       list.innerHTML = '';
       if (!f.list.length) list.append(el('div', 'empty', 'Henüz davet ettiğin kimse yok.'));
@@ -1100,7 +1105,8 @@
 
   $('#btnCopy').onclick = async () => {
     try {
-      const link = await ensureInviteLink();
+      // Bağlantı hazırsa kullanıcı dokunuşunu async beklemeyle kaybetme.
+      const link = validRefLink(refLink) ? refLink : await ensureInviteLink();
       if (navigator.clipboard?.writeText) {
         try {
           await navigator.clipboard.writeText(link);
@@ -1117,7 +1123,8 @@
   };
   $('#btnInvite').onclick = async () => {
     try {
-      const link = await ensureInviteLink();
+      // Telegram openTelegramLink için dokunma anında bağlantıyı aç.
+      const link = validRefLink(refLink) ? refLink : await ensureInviteLink();
       const text = 'Oil Pump oyununa katıl! Davetimle başlayıp ekibini büyüt.';
       const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(text);
       // Paylaşım doğrudan kullanıcının dokunmasıyla açılır; referans hazır değilse
