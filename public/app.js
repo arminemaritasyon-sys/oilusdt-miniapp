@@ -677,7 +677,19 @@
       $('#fTotal').textContent = fmt(f.total);
       $('#fActive').textContent = fmt(f.active);
       $('#fEarned').textContent = short(f.earned);
-      $('#refShareText').textContent = '9 seviyeli petrol referans kazancı: '+(f.ref_rates||[]).map((r,i)=>(i+1)+'. seviye %'+fmt(r*100,2)).join(' · ')+'. Bu paylar arkadaşlarının kazancından kesilmez.';
+      const refRates = Array.isArray(f.ref_rates) ? f.ref_rates.slice(0, 9) : [];
+      // Yüzdeler sunucudaki gerçek referans oranlarından gelir; sabitlenmez.
+      $('#refShareText').innerHTML = `
+        <h3 class="ref-earn-title">👥 9 Seviyeli Referans Kazancı</h3>
+        <p class="ref-earn-intro">Arkadaşlarının petrol satışlarından aşağıdaki seviyelere göre pay kazanırsın:</p>
+        <ol class="ref-earn-list">
+          ${refRates.map((rate, i) => `
+            <li>
+              <span class="ref-earn-level"><span class="ref-earn-index">${i + 1}</span> ${i + 1}. Seviye</span>
+              <strong>%${Number((Number(rate) * 100).toFixed(2)).toLocaleString('tr-TR', { maximumFractionDigits: 2 })}</strong>
+            </li>`).join('')}
+        </ol>
+        <p class="ref-earn-foot">Bu kazançlar arkadaşlarının bakiyesinden kesilmez. Oranlar ilgili seviyedeki oyuncunun petrol satışına uygulanır.</p>`;
       const list = $('#friendList');
       list.innerHTML = '';
       if (!f.list.length) list.append(el('div', 'empty', 'Henüz davet ettiğin kimse yok.'));
