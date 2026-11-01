@@ -3,6 +3,7 @@ import { tx, query } from '../lib/db.js';
 import { env, tg, webappUrl, webappKeyboard, safeEqual, botUsername } from '../lib/tg.js';
 import * as G from '../lib/game.js';
 import { approveWalletInvoice, rejectWalletInvoice } from '../lib/wallet.js';
+import { approveBankInvoice, rejectBankInvoice } from '../lib/bank_payments.js';
 import * as R from '../lib/rewards.js';
 import { notifyWithdrawalGroup, PAID_ANNOUNCEMENT_CHANNEL } from '../lib/payout_announcements.js';
 
@@ -209,6 +210,23 @@ async function run(b, req) {
       else await query('INSERT INTO bank_accounts(bank_name,holder,iban,sort,enabled) VALUES($1,$2,$3,$4,$5)',row);
       return {msg: b.enabled ? 'Banka etkinleştirildi. Oyuncular paket seçtiğinde IBAN görünecek; ödeme yalnızca manuel onayla tamamlanır.' : 'Banka bilgileri kaydedildi; oyunculara kapalı.'};
     }
+
+    case 'bank_invoices': {
+      const st=['submitted','waiting','paid','rejected','expired'].includes(b.status) ? b.status : 'submitted';
+      return {
+        status:st,
+        counts:Object.fromEntries((await query('SELECT status,COUNT(*)::int AS n FROM bank_invoices GROUP BY status')).map(x=>[x.status,x.n])),
+        invoices:await query(`SELECT bi.*,u.first_name,u.username,p.title
+          FROM bank_invoices bi
+          LEFT JOIN users u ON u.id=bi.user_id
+          LEFT JOIN products p ON p.id=bi.product_id
+          WHERE bi.status=$1 ORDER BY bi.id DESC LIMIT 200`,[st]),
+      };
+    }
+    case 'bank_invoice_approve':
+      return {msg:await tx(c=>approveBankInvoice(c,Number(b.id),req))};
+    case 'bank_invoice_reject':
+      return {msg:await tx(c=>rejectBankInvoice(c,Number(b.id),b.note))};
 
     case 'wallets':
       return { wallets: await query('SELECT * FROM crypto_wallets ORDER BY sort, id') };
