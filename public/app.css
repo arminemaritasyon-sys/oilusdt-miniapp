@@ -990,3 +990,32 @@ main { flex: 1; position: relative; min-height: 0; }
   font-variant-numeric: tabular-nums;
 }
 .daily button:disabled { opacity: .7; cursor: not-allowed; }
+
+/* Settings: country flags and 10 genuinely selectable localizations. */
+.lang-head {display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin:14px 0 9px}
+.lang-head b {color:#ffe3a3;font-size:15px}
+.lang-head small {color:#b6b0a4;font-size:11px}
+.language-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:16px}
+.language-option {display:flex;gap:7px;align-items:center;min-width:0;text-align:left;padding:9px 10px;border:2px solid #49413b;border-radius:11px;background:#2b292a;color:#efe3d4;font:800 12px Rubik,system-ui,sans-serif;cursor:pointer}
+.language-option.active {border-color:#edbb5f;background:#4a3926;box-shadow:inset 0 0 0 1px #c99c51}
+.language-option .language-flag {font-size:23px;line-height:1;flex:none}
+.language-option span:last-child {overflow:hidden;text-overflow:ellipsis}
+.bank-withdraw-label {display:block;margin:12px 0 3px;font-weight:800;font-size:12px;color:#eeddb7}
+.bank-withdraw-label+.wd-input {width:100%}
+/* Small, dismissible treasure-map shop hint on game entry. */
+.treasure-overlay {position:absolute;inset:0;z-index:70;background:rgba(7,8,15,.83);display:flex;align-items:center;justify-content:center;padding:18px;animation:fade .18s ease-out}
+.treasure-overlay.hidden {display:none !important}
+.treasure-card {position:relative;width:min(100%,360px);max-height:calc(100% - 24px);overflow-y:auto;text-align:center;padding:17px 17px 15px;border-radius:22px;background:linear-gradient(165deg,#372219,#251a18 66%,#171721);border:2px solid #ab793c;box-shadow:0 12px 38px #050505b9,inset 0 0 0 2px #61472c;color:#f7e8cb}
+.treasure-x {position:absolute;right:11px;top:10px;width:32px;height:32px;border-radius:50%;background:#4f3829;border:1px solid #c9a15d;color:#ffecc5;font-size:24px;line-height:27px;z-index:1}
+.treasure-map {max-width:310px;margin:6px auto 9px;filter:drop-shadow(0 5px 7px #07040588)}
+.treasure-svg {display:block;width:100%;height:auto}
+.treasure-copy {display:grid;gap:5px}
+.treasure-eyebrow {font-size:10px;letter-spacing:2.5px;color:#f7c95b;font-weight:900}
+.treasure-copy h2 {font-size:clamp(18px,5vw,23px);line-height:1.25;margin:3px 0;color:#ffe4a0}
+.treasure-copy .treasure-subtitle {font-size:14px;font-weight:800;color:#f4cd76;margin:0}
+.treasure-copy p:not(.treasure-subtitle) {font-size:12.5px;line-height:1.5;color:#e4d6bb;margin:6px 0}
+.treasure-copy small {font-size:10.5px;color:#cdbd9c;line-height:1.35}
+.treasure-shop {margin-top:15px;min-height:45px;width:100%;font-size:14px;line-height:1.3}
+.treasure-skip {width:100%;display:block;padding:11px 0 0;color:#d7c19e;background:none;border:none;font:800 12px Rubik,system-ui,sans-serif}
+@media(max-height:620px){.treasure-card{padding:12px 14px}.treasure-map{max-width:230px}.treasure-copy h2{font-size:17px}.treasure-shop{margin-top:8px}}
+@media(max-width:330px){.language-option{padding:7px 5px;font-size:11px}.language-option .language-flag{font-size:20px}}

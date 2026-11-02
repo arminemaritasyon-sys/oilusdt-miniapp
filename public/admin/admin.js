@@ -226,7 +226,7 @@
       page(`<h1>Kripto ödemeler</h1>
         <p class="hint">Oyuncu "Ödemeyi gönderdim" dediğinde ödeme <b>Onay bekleyen</b> sekmesine düşer. Cüzdanınızda <b>tam tutarı</b> (ve varsa TX kodunu) kontrol edip onaylayın; paket anında verilir ve oyuncuya bottan mesaj gider. Her siparişin tutarı benzersizdir, ödemeyi tutardan tanıyabilirsiniz.</p>
         <div class="tabs">${tabs}</div>
-        <table><tr><th>#</th><th>Tarih</th><th>Oyuncu</th><th>Paket</th><th>Tutar</th><th>Adres</th><th>TX / Not</th><th></th></tr>${rows}</table>`, j.dev);
+        <table><tr><th>#</th><th>Tarih</th><th>Oyuncu</th><th>Paket</th><th>Tutar</th><th>Cüzdan / IBAN ve alıcı</th><th>TX / Dekont / Not</th><th></th></tr>${rows}</table>`, j.dev);
       main.querySelectorAll('[data-approve]').forEach((b) => b.onclick = async () => {
         if (!confirm('Ödemeyi cüzdanınızda gördünüz mü? Onaylanınca paket oyuncuya verilir.')) return;
         try { flash = (await api('winv_approve', { id: b.dataset.approve })).msg; route(); } catch (e) { alert(e.message); }
@@ -303,7 +303,7 @@
     async wallets(editId) {
       const j = await api('wallets');
       const rows = j.wallets.map((w) => `<tr><td>${w.sort}</td><td><span class="dot" style="background:${esc(w.color)}"></span> <b>${esc(w.label)}</b></td><td>${esc(w.network)}</td>
-        <td><small class="mono">${esc(w.address)}</small></td><td>${w.price_id === 'usd' ? 'Sabit 1 $' : esc(w.price_id)}</td><td>${w.decimals}</td><td>${w.enabled ? 'Açık' : 'Kapalı'}</td>
+        <td>${w.bank_holder ? `<b>${esc(w.bank_holder)}</b><br>` : ''}<small class="mono">${esc(w.address)}</small></td><td>${w.price_id === 'usd' ? 'Sabit 1 $' : esc(w.price_id)}</td><td>${w.decimals}</td><td>${w.enabled ? 'Açık' : 'Kapalı'}</td>
         <td><a href="#wallets/${w.id}">Düzenle</a> · <a href="#" data-del="${w.id}">Sil</a></td></tr>`).join('') || '<tr><td colspan="8">Henüz cüzdan eklenmedi. Oyunda kripto seçeneği görünmez.</td></tr>';
       const e = j.wallets.find((w) => String(w.id) === editId) || { id: 0, label: 'USDT', network: 'TRC-20', address: '', price_id: 'usd', decimals: 4, color: '#26a17b', sort: 0, enabled: 1 };
       page(`<h1>Cüzdanlar <small>Oyuncuların ödeme göndereceği adresler</small></h1>
@@ -370,11 +370,11 @@
         <td><a href="#withdrawals/${j.status}/${n.id}">Düzenle</a> · <a href="#" data-pdel="${n.id}">Sil</a></td></tr>`).join('') || '<tr><td colspan="7">Çekim yöntemi yok.</td></tr>';
       const e = j.networks.find((n) => String(n.id) === editId) || { id: 0, label: 'USDT', network: 'TRC-20', min_usd: 5, fee_usd: 1, color: '#26a17b', sort: 0, enabled: 1 };
       page(`<h1>Çekimler <small>Ödül bakiyesinden çekim talepleri</small></h1>
-        <p class="hint">Talep oluşturulunca tutar oyuncunun ödül bakiyesinden düşülür. <b>Reddet</b> tutarı geri ekler. Ödemeyi yaptıktan sonra <b>Ödendi</b> deyip TX kodunu girin; oyuncuya bottan mesaj gider.
+        <p class="hint">Talep oluşturulunca tutar oyuncunun ödül bakiyesinden düşülür. <b>Reddet</b> tutarı geri ekler. Banka/kripto transferini gerçekten yaptıktan sonra <b>Ödendi</b> işaretleyin; IBAN taleplerinin TL tutarını ödeme günündeki kurla manuel hesaplayın ve dekontu saklayın. Oyuncuya bottan mesaj gider.
         ${j.api ? 'Otomatik ödeme API\'si açık (PAYOUT_API_KEY tanımlı).' : 'Otomatik ödeme altyapınızı bağlamak için Vercel\'e <code>PAYOUT_API_KEY</code> ekleyin.'}</p>
         <h2>Telegram çekim bildirimleri</h2>
         <form class="card form" id="wd-group-form">${field('Grup (@grup veya -100... ID)', 'chat', j.groupChat||'')}<button>Kaydet</button></form>
-        <p class="hint">Botu gruba ekleyin. Onay ve gerçek ödeme ayrı durum mesajları gönderir.</p>
+        <p class="hint">Botu gruba ekleyin. Yalnızca gerçek yeni çekim talepleri, onaylar ve tamamlanan ödemeler durumları açıkça belirtilerek paylaşılır. Kurgusal çekim mesajı gönderilmez.</p>
         <h2>Ödenen çekimler kanalı</h2>
         <p class="hint"><b>@oilwithdrawal</b> kanalına sadece <b>Ödendi</b> durumunda, oyuncu adı ve net gönderilen tutarla otomatik duyuru gider. Bot kanalda yönetici ve gönderi paylaşma yetkisine sahip olmalıdır.</p>
         <button type="button" class="sm" id="wd-channel-check">Kanal yetkisini denetle</button>
@@ -396,7 +396,8 @@
       const act = async (action, data, ask) => { if (ask && !confirm(ask)) return; try { flash = (await api(action, data)).msg; route(); } catch (ex) { alert(ex.message); } };
       main.querySelectorAll('[data-ap]').forEach((b) => b.onclick = () => act('wd_approve', { id: b.dataset.ap }, 'Talep onaylansın mı?'));
       main.querySelectorAll('[data-paid]').forEach((b) => b.onclick = () => {
-        const txh = prompt('Ödemenin TX kodu (isteğe bağlı):', '');
+        const wd = j.rows.find(w => String(w.id)===String(b.dataset.paid));
+        const txh = prompt(wd?.bank_holder ? 'Ödeme banka üzerinden gerçekten yapıldı mı? Dekont / havale referansı (isteğe bağlı):' : 'Ödemenin TX kodu (isteğe bağlı):', '');
         if (txh !== null) act('wd_paid', { id: b.dataset.paid, tx_hash: txh });
       });
       main.querySelectorAll('[data-rej]').forEach((b) => b.onclick = () => {

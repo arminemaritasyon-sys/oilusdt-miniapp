@@ -47,8 +47,13 @@
     if (S) renderGramBalance();
   }
   let busy = false;
-  let prefs = { haptic: true, sound: true, music: true };
+  const i18n = window.OilI18n;
+  let prefs = { haptic: true, sound: true, music: true, language: 'tr' };
+  const L = (key) => i18n?.t(prefs.language,key) || key;
   try { prefs = { ...prefs, ...JSON.parse(localStorage.getItem('op-prefs') || '{}') }; } catch {}
+  if (!i18n?.languages.some(x=>x.code===prefs.language)) prefs.language='tr';
+  function applyLanguage() { i18n?.apply(prefs.language); }
+
 
   /* ---------- API ---------- */
   async function api(action, data = {}) {
@@ -486,6 +491,7 @@
     haptic('light');
     sfx('tap');
     loaders[v]?.();
+    applyLanguage();
   }
   document.querySelectorAll('.tabs button').forEach((b) => b.onclick = () => show(b.dataset.v));
   $('#btnTop').onclick = () => show('top');
@@ -985,7 +991,7 @@
       daily.innerHTML = `
         <span class="d-ico">⚡</span>
         <div class="d-txt">
-          <b>Günlük Güç Ödülü</b>
+          <b>${L('dailyPower')}</b>
           <small>${d.streak ? fmt(d.streak) + ' kez alındı · ' : 'İlk ödül · '}<span id="dailyPowerNext">+${fmt(d.next)} güç</span></small>
           <small id="dailyCooldown" class="daily-cooldown"></small>
         </div>
@@ -997,16 +1003,16 @@
         dailyButton.disabled = secs > 0;
         dailyButton.classList.toggle('done', secs > 0);
         dailyButton.classList.toggle('gold', secs === 0);
-        dailyButton.textContent = secs > 0 ? 'BEKLE' : 'AL';
+        dailyButton.textContent = secs > 0 ? L('dailyWait') : L('dailyClaim');
         const remain = daily.querySelector('#dailyCooldown');
         if (remain) {
           if (secs > 0) {
             const hours = Math.floor(secs / 3600);
             const minutes = Math.floor((secs % 3600) / 60);
             const seconds = secs % 60;
-            remain.textContent = 'Yeni ödül: ' + [hours, minutes, seconds].map(x => String(x).padStart(2, '0')).join(':') + ' sonra';
+            remain.textContent = L('dailyNew') + ': ' + [hours, minutes, seconds].map(x => String(x).padStart(2, '0')).join(':') + ' sonra';
           } else {
-            remain.textContent = '24 saatte bir alınır · Gücüne anında eklenir';
+            remain.textContent = L('dailyHint');
           }
         }
       };
@@ -1014,7 +1020,7 @@
       dailyCountdownTimer = setInterval(updateCooldown, 1000);
       dailyButton.onclick = () => run(async () => {
         const r = await api('daily');
-        toast('Günlük ödül: +' + fmt(r.reward) + ' güç ⚡', false, 'success');
+        toast(L('dailySuccess') + ': +' + fmt(r.reward) + ' ⚡', false, 'success');
         loadTasks();
       });
 
@@ -1174,7 +1180,7 @@
   let wdNet = null;
   const money = (n) => '$' + fmt(n, 2);
   const kindName = { weekly: 'Haftalık ödül', referral: 'Referans ödülü', oil_referral: 'Petrol referans kazancı', oil_sale: 'Petrol satış kazancı', upgrade: 'Pompa yükseltme', coin_migration: 'Mevcut coin aktarımı', withdraw: 'Çekim talebi', refund: 'Çekim iadesi', admin: 'Düzeltme' };
-  const wdStatus = { pending: 'BEKLEMEDE', approved: 'ONAYLANDI', paid: 'ÖDENDİ', rejected: 'REDDEDİLDİ' };
+  const wdStatus = { pending: 'pending', approved: 'approved', paid: 'paid', rejected: 'rejected' };
 
   function timeLeft(ts) {
     const s = Math.max(0, ts - serverNow());
@@ -1205,7 +1211,7 @@
   const moveRow = (m) => `<div class="mv">
       <span class="mv-ico k-${m.kind}">${kindIco[m.kind] || '•'}</span>
       <span class="mv-txt"><b>${esc(m.title)}</b><small>${fmtDate(m.t)}${m.sub ? ' · ' + esc(m.sub) : ''}</small></span>
-      <span class="mv-amt"><b class="${m.amount > 0 ? 'plus' : 'minus'}">${m.amount > 0 ? '+' : '−'}${money(Math.abs(m.amount))}</b>${m.status ? `<span class="st ${m.status}">${wdStatus[m.status]}</span>` : ''}</span>
+      <span class="mv-amt"><b class="${m.amount > 0 ? 'plus' : 'minus'}">${m.amount > 0 ? '+' : '−'}${money(Math.abs(m.amount))}</b>${m.status ? `<span class="st ${m.status}">${L(wdStatus[m.status])}</span>` : ''}</span>
     </div>`;
   const emptyMoves = '<div class="mv-empty">Henüz hesap hareketi yok.<br>Haftalık yarışmadan ve referans ödüllerinden kazandıkların burada görünür.</div>';
 
@@ -1273,27 +1279,30 @@
       sheet(`<h2>Çekim talebin</h2>
         <div class="pay-box"><span class="coin-ico big" style="--c:#26a17b">${esc(coinSym(open.label))}</span>
           <div><small>${esc(open.label)} · ${esc(open.network)}</small><b class="amt">${money(open.amount)}</b></div></div>
-        <div class="wd-status"><small class="mono">${esc(open.address)}</small><span class="st ${open.status}">${wdStatus[open.status]}</span></div>
-        <p class="wd-info">Talebin işleniyor. Ödeme yapılınca sana bottan mesaj gelecek.</p>
+        <div class="wd-status"><small class="mono">${open.bank_holder?esc(open.bank_holder)+' · ':''}${esc(open.address)}</small><span class="st ${open.status}">${L(open.status)}</span></div>
+        <p class="wd-info">${L('withdrawProcessing')}</p>
         <div class="btns"><button class="btn done" data-close>Kapat</button></div>`);
       return;
     }
     if (!wdNet || !r.networks.some((n) => n.id === wdNet)) wdNet = r.networks[0].id;
     const net = r.networks.find((n) => n.id === wdNet);
+    const isIban = String(net.label).toUpperCase()==='IBAN' && String(net.network)==='TR / TRY';
     const min = Math.max(10, r.min, net.min_usd || 0);
-    sheet(`<h2>Çekim</h2>
-      <div class="pay-sec">ÇEKİLEBİLİR BAKİYE <span>${money(r.balance)}</span></div><div class="pay-sec">YÖNTEM SEÇ</div>
+    sheet(`<h2>${L('withdrawTitle')}</h2>
+      <div class="pay-sec">${L('balance')} <span>${money(r.balance)}</span></div><div class="pay-sec">${L('chooseMethod')}</div>
       <div class="coins">${(r.display_networks || r.networks).map((n) => `<button
         class="coin${n.id === wdNet ? ' sel' : ''}${!n.enabled ? ' unavailable' : ''}"
         ${n.enabled ? `data-net="${n.id}"` : 'disabled aria-disabled="true"'}>
         <span class="coin-ico" style="--c:${esc(n.color)}">${esc(coinSym(n.label))}</span>
         <span><b>${esc(n.label)}</b><small>${esc(n.network)}${!n.enabled ? ' · Yakında' : ''}</small></span>
       </button>`).join('')}</div>
-      <p class="wd-info">Talep tutarı USD'dir. Ödenecek coin tutarı ödeme günündeki kura ve ağ masrafına bağlıdır.</p>
-      <input id="wdAddr" class="wd-input mono" placeholder="${esc(net.label)} ${esc(net.network)} cüzdan adresin" autocomplete="off" style="margin-top:12px">
-      <div class="wd-amt"><input id="wdAmt" class="wd-input" type="number" step="0.01" min="${min}" placeholder="Tutar ($)"><button class="wd-max" id="wdMax">MAKS</button></div>
+      <p class="wd-info">${isIban ? L('bankNotice') : "Talep tutarı USD'dir. Ödenecek coin tutarı ödeme günündeki kura ve ağ masrafına bağlıdır."}</p>
+      ${isIban ? `<label class="bank-withdraw-label">${L('bankHolder')}</label><input id="wdHolder" class="wd-input" maxlength="100" autocomplete="name" placeholder="${L('holderPlaceholder')}">
+         <label class="bank-withdraw-label">${L('bankIban')}</label>` : ''}
+      <input id="wdAddr" class="wd-input mono" ${isIban?'maxlength="34" inputmode="text"':'maxlength="120"'} placeholder="${isIban?L('ibanPlaceholder'):esc(net.label)+' '+esc(net.network)+' cüzdan adresin'}" autocomplete="off" style="margin-top:12px">
+      <div class="wd-amt"><input id="wdAmt" class="wd-input" type="number" step="0.01" min="${min}" placeholder="${L('withdrawAmount')}"><button class="wd-max" id="wdMax">${L('max')}</button></div>
       <p class="wd-info" id="wdInfo"></p>
-      <div class="btns"><button class="btn gold" id="wdBtn" ${r.balance < min ? 'disabled' : ''}>ÇEKİM TALEBİ OLUŞTUR</button></div>
+      <div class="btns"><button class="btn gold" id="wdBtn" ${r.balance < min ? 'disabled' : ''}>${L('requestWithdrawal')}</button></div>
       <button class="pay-cancel" data-close>Vazgeç</button>`);
     $('#sheet').querySelectorAll('[data-net]').forEach((b) => b.onclick = () => { wdNet = Number(b.dataset.net); sfx('tap'); showWithdraw(); });
     const amt = $('#wdAmt');
@@ -1307,9 +1316,13 @@
     $('#wdBtn').onclick = () => run(async () => {
       const a = Number(amt.value) || 0;
       if (!Number.isFinite(a) || a < min || a > r.balance) { toast('Çekim tutarı ' + money(min) + ' ile kullanılabilir bakiye arasında olmalı.', true); return; }
-      const address = $('#wdAddr').value.trim();
-      if (!confirm(`${money(a)} çekim talebi oluşturulsun mu?\n\nAdres: ${address}\nAğ: ${net.label} ${net.network}\n\nAdresi kontrol et; yanlış adrese gönderilen ödeme geri alınamaz.`)) return;
-      RW = (await api('withdraw', { network: wdNet, address, amount: a })).rewards;
+      const address = $('#wdAddr').value.trim().replace(/\s+/g, isIban ? '' : ' ');
+      const holder = isIban ? $('#wdHolder').value.trim() : '';
+      if (isIban && (!/^TR[0-9]{24}$/i.test(address) || holder.length < 5)) {
+        toast('Geçerli TR IBAN ve hesap sahibi adı soyadı gir.', true); return;
+      }
+      if (!confirm(`${L('withdrawConfirm')}\n\n${money(a)}\n${isIban?'IBAN: ':'Adres: '}${address}\n${isIban?L('bankHolder')+': '+holder+'\n':''}${net.label} ${net.network}\n\n${isIban?L('bankNotice'):'Adresi kontrol et; yanlış adrese gönderilen ödeme geri alınamaz.'}`)) return;
+      RW = (await api('withdraw', { network: wdNet, address, bank_holder: holder, amount: a })).rewards;
       closeSheet();
       renderRewards();
       toast('Çekim talebin alındı.', false, 'coin');
@@ -1349,16 +1362,28 @@
 
   $('#btnSettings').onclick = () => {
     sheet(`
-      <h2>Ayarlar</h2>
+      <h2>${L('settings')}</h2>
+      <div class="lang-head"><b>🌐 ${L('language')}</b><small>${L('languageHint')}</small></div>
+      <div class="language-grid" role="group" aria-label="${L('language')}">
+        ${i18n.languages.map(x=>`<button type="button" class="language-option${prefs.language===x.code?' active':''}" data-lang="${x.code}" aria-pressed="${prefs.language===x.code}"><span class="language-flag">${x.flag}</span><span>${x.name}</span></button>`).join('')}
+      </div>
       <div class="rows">
-        <div><span>Ses efektleri</span><b><button class="btn small ${prefs.sound ? 'green' : 'done'}" id="tSound">${prefs.sound ? 'AÇIK' : 'KAPALI'}</button></b></div>
-        <div><span>Müzik</span><b><button class="btn small ${prefs.music ? 'green' : 'done'}" id="tMusic">${prefs.music ? 'AÇIK' : 'KAPALI'}</button></b></div>
-        <div><span>Titreşim</span><b><button class="btn small ${prefs.haptic ? 'green' : 'done'}" id="tHaptic">${prefs.haptic ? 'AÇIK' : 'KAPALI'}</button></b></div>
+        <div><span>${L('sound')}</span><b><button class="btn small ${prefs.sound ? 'green' : 'done'}" id="tSound">${prefs.sound ? L('on') : L('off')}</button></b></div>
+        <div><span>${L('music')}</span><b><button class="btn small ${prefs.music ? 'green' : 'done'}" id="tMusic">${prefs.music ? L('on') : L('off')}</button></b></div>
+        <div><span>${L('vibration')}</span><b><button class="btn small ${prefs.haptic ? 'green' : 'done'}" id="tHaptic">${prefs.haptic ? L('on') : L('off')}</button></b></div>
       </div>
       <div class="btns">
-        <button class="btn account-delete" id="openAccountDelete">🗑️ Hesabımı Sil</button>
-        <button class="btn done" data-close>Kapat</button>
+        <button class="btn account-delete" id="openAccountDelete">🗑️ ${L('delete')}</button>
+        <button class="btn done" data-close>${L('close')}</button>
       </div>`);
+    $('#sheet').querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{
+      prefs.language=b.dataset.lang;
+      savePrefs();
+      applyLanguage();
+      $('#btnSettings').onclick();
+      const active=document.querySelector('.view.active')?.id?.replace('v-','');
+      if (active && loaders[active]) loaders[active]();
+    });
     $('#openAccountDelete').onclick = () => {
       sheet(`
         <h2>⚠️ Hesabımı Sil</h2>
@@ -1425,6 +1450,38 @@
     };
   };
 
+  /* ---------- Günlük hazine haritası tanıtımı ---------- */
+  let treasureShownInSession = false;
+  function showTreasurePopup() {
+    if (treasureShownInSession || !S) return;
+    let today;
+    try {
+      today = new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul'}).format(new Date());
+    } catch { today = new Date().toISOString().slice(0,10); }
+    const userId = tg?.initDataUnsafe?.user?.id || qs.get('dev') || 'player';
+    const storageKey = 'op-treasure-v1-' + userId;
+    try { if (localStorage.getItem(storageKey) === today) return; } catch {}
+    treasureShownInSession = true;
+    const overlay=$('#treasureOverlay');
+    if (!overlay) return;
+    $('#treasureTitle').textContent = L('treasureTitle');
+    $('#treasureSubtitle').textContent = L('treasureSubtitle');
+    $('#treasureBody').textContent = L('treasureCopy');
+    $('#treasureDisclaimer').textContent = L('treasureFine');
+    $('#treasureShop').textContent = '⚡ ' + L('treasureCta');
+    $('#treasureSkip').textContent = L('treasureClose');
+    $('#treasureX').setAttribute('aria-label', L('close'));
+    const dismiss=()=>{
+      overlay.classList.add('hidden');
+      try { localStorage.setItem(storageKey,today); } catch {}
+    };
+    $('#treasureSkip').onclick=dismiss;
+    $('#treasureX').onclick=dismiss;
+    $('#treasureShop').onclick=()=>{dismiss();show('shop');};
+    overlay.onclick=e=>{if(e.target===overlay)dismiss();};
+    overlay.classList.remove('hidden');
+  }
+
   /* ---------- Başlangıç ---------- */
   async function boot() {
     if (tg) {
@@ -1443,7 +1500,11 @@
       bankAccounts = j.bank_accounts || [];
       refreshGramQuote();
       $('#loader').classList.add('out');
-      setTimeout(() => $('#loader').classList.add('hidden'), 400);
+      applyLanguage();
+      setTimeout(() => {
+        $('#loader').classList.add('hidden');
+        showTreasurePopup();
+      }, 400);
     } catch (e) {
       $('#loadMsg').textContent = e.message;
     }

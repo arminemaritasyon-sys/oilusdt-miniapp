@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=26">
+<link rel="stylesheet" href="app.css?v=27">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -297,8 +297,46 @@
   </div>
   <div class="modal hidden" id="modal"><div class="sheet" id="sheet"></div></div>
   <div class="toast hidden" id="toast"></div>
+
+  <div id="treasureOverlay" class="treasure-overlay hidden" role="dialog" aria-modal="true" aria-label="Treasure map">
+    <div class="treasure-card">
+      <button type="button" class="treasure-x" id="treasureX" aria-label="Close">×</button>
+      <div class="treasure-map" aria-hidden="true">
+        <svg viewBox="0 0 320 135" class="treasure-svg" role="img">
+          <defs>
+            <radialGradient id="mapGold"><stop stop-color="#fdf0be"/><stop offset="1" stop-color="#bd8a44"/></radialGradient>
+            <filter id="mapShadow"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity=".35"/></filter>
+          </defs>
+          <rect x="7" y="5" width="306" height="125" rx="15" fill="url(#mapGold)" stroke="#764d27" stroke-width="4"/>
+          <path d="M12 35Q87 4 151 36T308 25M19 105Q99 81 151 113T303 93" stroke="#885d32" fill="none" stroke-width="2" opacity=".25"/>
+          <path d="M49 84C83 29 116 119 165 65S223 23 266 67" stroke="#805128" stroke-width="4" stroke-dasharray="5 10" fill="none" stroke-linecap="round"/>
+          <circle cx="47" cy="86" r="13" fill="#357c54" stroke="#f8e2a4" stroke-width="4"/>
+          <path d="M42 86l4 5 8-11" fill="none" stroke="#fffbdc" stroke-width="3" stroke-linecap="round"/>
+          <g transform="translate(247 45)" filter="url(#mapShadow)">
+            <path d="M0 15L19 0 39 15 37 50 2 50Z" fill="#513020" stroke="#392016" stroke-width="2"/>
+            <path d="M0 15L19 26 39 15 37 50 2 50Z" fill="#a36625"/>
+            <path d="M0 15L19 26 39 15" fill="none" stroke="#ffda68" stroke-width="5"/>
+            <rect x="16" y="24" width="7" height="16" rx="2" fill="#ffcc56"/>
+            <path d="M19-12v8M5-6l4 6M33-6l-4 6" stroke="#ffe599" stroke-width="4" stroke-linecap="round"/>
+          </g>
+          <text x="98" y="32" font-size="27" fill="#54381c" font-weight="900" transform="rotate(-10 98 32)">X</text>
+          <circle cx="120" cy="78" r="5" fill="#8d5e36" opacity=".5"/>
+        </svg>
+      </div>
+      <div class="treasure-copy">
+        <span class="treasure-eyebrow">OIL PUMP · QUEST</span>
+        <h2 id="treasureTitle">Hazine haritan hazır!</h2>
+        <p class="treasure-subtitle" id="treasureSubtitle"></p>
+        <p id="treasureBody"></p>
+        <small id="treasureDisclaimer"></small>
+      </div>
+      <button type="button" id="treasureShop" class="btn gold treasure-shop">⚡</button>
+      <button type="button" id="treasureSkip" class="treasure-skip"></button>
+    </div>
+  </div>
   <div class="loader" id="loader"><div class="drop"></div><b>Oil Pump</b><span id="loadMsg">Yükleniyor…</span></div>
 </div>
-<script src="app.js?v=39"></script>
+<script src="i18n.js?v=1"></script>
+<script src="app.js?v=40"></script>
 </body>
 </html>
