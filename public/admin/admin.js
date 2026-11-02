@@ -374,7 +374,7 @@
         ${j.api ? 'Otomatik ödeme API\'si açık (PAYOUT_API_KEY tanımlı).' : 'Otomatik ödeme altyapınızı bağlamak için Vercel\'e <code>PAYOUT_API_KEY</code> ekleyin.'}</p>
         <h2>Telegram çekim bildirimleri</h2>
         <form class="card form" id="wd-group-form">${field('Grup (@grup veya -100... ID)', 'chat', j.groupChat||'')}<button>Kaydet</button></form>
-        <p class="hint">Botu gruba ekleyin. Onay ve gerçek ödeme ayrı durum mesajları gönderir.</p>
+        <p class="hint">Botu gruba ekleyin. Yalnızca gerçek yeni çekim talepleri, onaylar ve tamamlanan ödemeler durumları açıkça belirtilerek paylaşılır. Kurgusal çekim mesajı gönderilmez.</p>
         <h2>Ödenen çekimler kanalı</h2>
         <p class="hint"><b>@oilwithdrawal</b> kanalına sadece <b>Ödendi</b> durumunda, oyuncu adı ve net gönderilen tutarla otomatik duyuru gider. Bot kanalda yönetici ve gönderi paylaşma yetkisine sahip olmalıdır.</p>
         <button type="button" class="sm" id="wd-channel-check">Kanal yetkisini denetle</button>
