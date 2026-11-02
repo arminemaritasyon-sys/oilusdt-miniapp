@@ -47,8 +47,13 @@
     if (S) renderGramBalance();
   }
   let busy = false;
-  let prefs = { haptic: true, sound: true, music: true };
+  const i18n = window.OilI18n;
+  let prefs = { haptic: true, sound: true, music: true, language: 'tr' };
+  const L = (key) => i18n?.t(prefs.language,key) || key;
   try { prefs = { ...prefs, ...JSON.parse(localStorage.getItem('op-prefs') || '{}') }; } catch {}
+  if (!i18n?.languages.some(x=>x.code===prefs.language)) prefs.language='tr';
+  function applyLanguage() { i18n?.apply(prefs.language); }
+
 
   /* ---------- API ---------- */
   async function api(action, data = {}) {
@@ -486,6 +491,7 @@
     haptic('light');
     sfx('tap');
     loaders[v]?.();
+    applyLanguage();
   }
   document.querySelectorAll('.tabs button').forEach((b) => b.onclick = () => show(b.dataset.v));
   $('#btnTop').onclick = () => show('top');
@@ -985,7 +991,7 @@
       daily.innerHTML = `
         <span class="d-ico">⚡</span>
         <div class="d-txt">
-          <b>Günlük Güç Ödülü</b>
+          <b>${L('dailyPower')}</b>
           <small>${d.streak ? fmt(d.streak) + ' kez alındı · ' : 'İlk ödül · '}<span id="dailyPowerNext">+${fmt(d.next)} güç</span></small>
           <small id="dailyCooldown" class="daily-cooldown"></small>
         </div>
@@ -997,16 +1003,16 @@
         dailyButton.disabled = secs > 0;
         dailyButton.classList.toggle('done', secs > 0);
         dailyButton.classList.toggle('gold', secs === 0);
-        dailyButton.textContent = secs > 0 ? 'BEKLE' : 'AL';
+        dailyButton.textContent = secs > 0 ? L('dailyWait') : L('dailyClaim');
         const remain = daily.querySelector('#dailyCooldown');
         if (remain) {
           if (secs > 0) {
             const hours = Math.floor(secs / 3600);
             const minutes = Math.floor((secs % 3600) / 60);
             const seconds = secs % 60;
-            remain.textContent = 'Yeni ödül: ' + [hours, minutes, seconds].map(x => String(x).padStart(2, '0')).join(':') + ' sonra';
+            remain.textContent = L('dailyNew') + ': ' + [hours, minutes, seconds].map(x => String(x).padStart(2, '0')).join(':') + ' sonra';
           } else {
-            remain.textContent = '24 saatte bir alınır · Gücüne anında eklenir';
+            remain.textContent = L('dailyHint');
           }
         }
       };
@@ -1014,7 +1020,7 @@
       dailyCountdownTimer = setInterval(updateCooldown, 1000);
       dailyButton.onclick = () => run(async () => {
         const r = await api('daily');
-        toast('Günlük ödül: +' + fmt(r.reward) + ' güç ⚡', false, 'success');
+        toast(L('dailySuccess') + ': +' + fmt(r.reward) + ' ⚡', false, 'success');
         loadTasks();
       });
 
@@ -1349,16 +1355,28 @@
 
   $('#btnSettings').onclick = () => {
     sheet(`
-      <h2>Ayarlar</h2>
+      <h2>${L('settings')}</h2>
+      <div class="lang-head"><b>🌐 ${L('language')}</b><small>${L('languageHint')}</small></div>
+      <div class="language-grid" role="group" aria-label="${L('language')}">
+        ${i18n.languages.map(x=>`<button type="button" class="language-option${prefs.language===x.code?' active':''}" data-lang="${x.code}" aria-pressed="${prefs.language===x.code}"><span class="language-flag">${x.flag}</span><span>${x.name}</span></button>`).join('')}
+      </div>
       <div class="rows">
-        <div><span>Ses efektleri</span><b><button class="btn small ${prefs.sound ? 'green' : 'done'}" id="tSound">${prefs.sound ? 'AÇIK' : 'KAPALI'}</button></b></div>
-        <div><span>Müzik</span><b><button class="btn small ${prefs.music ? 'green' : 'done'}" id="tMusic">${prefs.music ? 'AÇIK' : 'KAPALI'}</button></b></div>
-        <div><span>Titreşim</span><b><button class="btn small ${prefs.haptic ? 'green' : 'done'}" id="tHaptic">${prefs.haptic ? 'AÇIK' : 'KAPALI'}</button></b></div>
+        <div><span>${L('sound')}</span><b><button class="btn small ${prefs.sound ? 'green' : 'done'}" id="tSound">${prefs.sound ? L('on') : L('off')}</button></b></div>
+        <div><span>${L('music')}</span><b><button class="btn small ${prefs.music ? 'green' : 'done'}" id="tMusic">${prefs.music ? L('on') : L('off')}</button></b></div>
+        <div><span>${L('vibration')}</span><b><button class="btn small ${prefs.haptic ? 'green' : 'done'}" id="tHaptic">${prefs.haptic ? L('on') : L('off')}</button></b></div>
       </div>
       <div class="btns">
-        <button class="btn account-delete" id="openAccountDelete">🗑️ Hesabımı Sil</button>
-        <button class="btn done" data-close>Kapat</button>
+        <button class="btn account-delete" id="openAccountDelete">🗑️ ${L('delete')}</button>
+        <button class="btn done" data-close>${L('close')}</button>
       </div>`);
+    $('#sheet').querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{
+      prefs.language=b.dataset.lang;
+      savePrefs();
+      applyLanguage();
+      $('#btnSettings').onclick();
+      const active=document.querySelector('.view.active')?.id?.replace('v-','');
+      if (active && loaders[active]) loaders[active]();
+    });
     $('#openAccountDelete').onclick = () => {
       sheet(`
         <h2>⚠️ Hesabımı Sil</h2>
