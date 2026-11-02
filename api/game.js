@@ -218,7 +218,8 @@ export default async function handler(req, res) {
       delete out.bank_notify;
     }
     if (out.withdrawAnnounce) {
-      if(out.withdrawAnnounce.status==='approved')await notifyWithdrawalGroup(out.withdrawAnnounce.id,'approved');
+      if(['pending','approved'].includes(out.withdrawAnnounce.status))
+        await notifyWithdrawalGroup(out.withdrawAnnounce.id,out.withdrawAnnounce.status);
       await R.notifyAdminsWithdraw(out.withdrawAnnounce, tgUser);
       delete out.withdrawAnnounce;
     }
