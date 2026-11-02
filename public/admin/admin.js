@@ -362,15 +362,17 @@
       const names = { pending: 'Bekleyen', approved: 'Onaylanan (ödenecek)', paid: 'Ödenen', rejected: 'Reddedilen' };
       const tabs = Object.entries(names).map(([k, v]) => `<a href="#withdrawals/${k}" class="tab${k === j.status ? ' on' : ''}">${v} (${j.counts[k] || 0})</a>`).join('');
       const rows = j.rows.map((w) => `<tr><td>${w.id}</td><td>${dt(w.created_at)}</td><td><a href="#user/${w.user_id}">${esc(w.first_name || w.user_id)}</a></td>
-        <td><b>${usd(w.amount - w.fee)}</b><br><small>talep ${usd(w.amount)} · ücret ${usd(w.fee)}</small></td><td>${esc(w.label)}<br><small>${esc(w.network)}</small></td>
-        <td><small class="mono">${esc(w.address)}</small></td><td>${w.tx_hash ? `<small class="mono">${esc(w.tx_hash)}</small>` : '-'}${w.note ? `<br><small>Not: ${esc(w.note)}</small>` : ''}</td>
+        <td><b>${usd(w.amount - w.fee)}</b><br><small>talep ${usd(w.amount)} · ücret ${usd(w.fee)}</small>
+          ${w.amount_try!=null?`<br><b>ÖDENECEK: ₺${nf(w.amount_try,2)}</b><br><small>1 USD = ₺${nf(w.rate_try,4)} · talep kuru</small>`:''}</td>
+        <td>${esc(w.network==='TR / TRY'?'Banka Havalesi':w.label)}<br><small>${esc(w.network)}</small></td>
+        <td>${w.bank_holder?`<b>${esc(w.bank_holder)}</b><br>`:''}<small class="mono">${esc(w.address)}</small></td><td>${w.tx_hash ? `<small class="mono">${esc(w.tx_hash)}</small>` : '-'}${w.note ? `<br><small>Not: ${esc(w.note)}</small>` : ''}</td>
         <td>${w.status === 'pending' ? `<button class="ok" data-ap="${w.id}">Onayla</button> ` : ''}${['pending', 'approved'].includes(w.status) ? `<button class="ok" data-paid="${w.id}">Ödendi</button> <button class="sm" data-rej="${w.id}">Reddet</button>` : names[w.status]}</td></tr>`).join('')
         || '<tr><td colspan="8">Kayıt yok.</td></tr>';
       const nets = j.networks.map((n) => `<tr><td>${n.sort}</td><td><span class="dot" style="background:${esc(n.color)}"></span> <b>${esc(n.label)}</b></td><td>${esc(n.network)}</td><td>${usd(n.min_usd)}</td><td>${usd(n.fee_usd)}</td><td>${n.enabled ? 'Açık' : 'Kapalı'}</td>
         <td><a href="#withdrawals/${j.status}/${n.id}">Düzenle</a> · <a href="#" data-pdel="${n.id}">Sil</a></td></tr>`).join('') || '<tr><td colspan="7">Çekim yöntemi yok.</td></tr>';
       const e = j.networks.find((n) => String(n.id) === editId) || { id: 0, label: 'USDT', network: 'TRC-20', min_usd: 5, fee_usd: 1, color: '#26a17b', sort: 0, enabled: 1 };
       page(`<h1>Çekimler <small>Ödül bakiyesinden çekim talepleri</small></h1>
-        <p class="hint">Talep oluşturulunca tutar oyuncunun ödül bakiyesinden düşülür. <b>Reddet</b> tutarı geri ekler. Banka/kripto transferini gerçekten yaptıktan sonra <b>Ödendi</b> işaretleyin; IBAN taleplerinin TL tutarını ödeme günündeki kurla manuel hesaplayın ve dekontu saklayın. Oyuncuya bottan mesaj gider.
+        <p class="hint">Talep oluşturulunca tutar oyuncunun ödül bakiyesinden düşülür. <b>Reddet</b> tutarı geri ekler. Banka/kripto transferini gerçekten yaptıktan sonra <b>Ödendi</b> işaretleyin; Banka Havalesi taleplerinde TL tutarı sunucuda talep anındaki USD/TRY referans kuruyla otomatik kaydedilir ve tabloda görünür. Havale yapılırken kaydedilmiş TL tutarını kontrol edin; banka masrafları ayrıca oluşabilir. Dekontu saklayın. Oyuncuya bottan mesaj gider.
         ${j.api ? 'Otomatik ödeme API\'si açık (PAYOUT_API_KEY tanımlı).' : 'Otomatik ödeme altyapınızı bağlamak için Vercel\'e <code>PAYOUT_API_KEY</code> ekleyin.'}</p>
         <h2>Telegram çekim bildirimleri</h2>
         <form class="card form" id="wd-group-form">${field('Grup (@grup veya -100... ID)', 'chat', j.groupChat||'')}<button>Kaydet</button></form>
@@ -379,7 +381,7 @@
         <p class="hint"><b>@oilwithdrawal</b> kanalına sadece <b>Ödendi</b> durumunda, oyuncu adı ve net gönderilen tutarla otomatik duyuru gider. Bot kanalda yönetici ve gönderi paylaşma yetkisine sahip olmalıdır.</p>
         <button type="button" class="sm" id="wd-channel-check">Kanal yetkisini denetle</button>
         <div class="tabs">${tabs}</div>
-        <table><tr><th>#</th><th>Tarih</th><th>Oyuncu</th><th>Gönderilecek</th><th>Yöntem</th><th>Adres</th><th>TX / Not</th><th></th></tr>${rows}</table>
+        <table><tr><th>#</th><th>Tarih</th><th>Oyuncu</th><th>Gönderilecek</th><th>Yöntem</th><th>Alıcı / Adres / IBAN</th><th>TX / Referans</th><th></th></tr>${rows}</table>
         <h2>Çekim yöntemleri</h2><table><tr><th>Sıra</th><th>Coin</th><th>Ağ</th><th>En az</th><th>Ağ ücreti</th><th>Durum</th><th></th></tr>${nets}</table>
         <h2>${e.id ? 'Yöntemi düzenle' : 'Yeni çekim yöntemi'}</h2><form class="card form" id="pnf"><input type="hidden" name="id" value="${e.id}">
         ${field('Coin adı', 'label', e.label, 'text', 'required')}${field('Ağ', 'network', e.network)}

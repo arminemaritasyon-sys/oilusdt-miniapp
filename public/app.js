@@ -1276,14 +1276,38 @@
     $('#goInvite').onclick = () => { closeSheet(); show('friends'); };
   }
 
+  const isBankTransfer = n => String(n?.network||'').toUpperCase()==='TR / TRY';
+  const payoutLabel = n => isBankTransfer(n) ? 'Banka Havalesi' : String(n?.label||'');
+  const payoutIcon = n => isBankTransfer(n) ? '🏦' : coinSym(n?.label);
+  const payoutTry = n => n?.amount_try==null ? null : Number(n.amount_try);
+  const tryMoney = n => Number(n).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₺';
+  let bankFxCache = null, bankFxPromise = null;
+  async function bankWithdrawalQuote() {
+    if(bankFxCache && Date.now()-bankFxCache.fetched<5*60*1000)return bankFxCache;
+    if(bankFxPromise)return bankFxPromise;
+    bankFxPromise=(async()=>{
+      const res=await fetch('/api/usd_try_quote',{cache:'no-store'});
+      if(!res.ok)throw new Error('Güncel USD/TRY kuru alınamadı.');
+      const data=await res.json();
+      const rate=Number(data.rate), updated=Number(data.updated_at);
+      if(!data.ok||!Number.isFinite(rate)||rate<=0||
+         !Number.isSafeInteger(updated)||Math.abs(Date.now()/1000-updated)>72*3600)
+        throw new Error('Güncel USD/TRY kuru alınamadı.');
+      bankFxCache={rate,updated,source:data.source,fetched:Date.now()};
+      return bankFxCache;
+    })();
+    try{return await bankFxPromise;}finally{bankFxPromise=null;}
+  }
+
   function showWithdraw() {
     const r = RW;
     const open = r.withdrawals.find((x) => x.status === 'pending' || x.status === 'approved');
     if (!r.withdraw_enabled || !r.networks.length) { toast('Çekimler şu anda kapalı.', true); return; }
     if (open) {
       sheet(`<h2>Çekim talebin</h2>
-        <div class="pay-box"><span class="coin-ico big" style="--c:#26a17b">${esc(coinSym(open.label))}</span>
-          <div><small>${esc(open.label)} · ${esc(open.network)}</small><b class="amt">${money(open.amount)}</b></div></div>
+        <div class="pay-box"><span class="coin-ico big ${isBankTransfer(open)?'tr-bank-icon':''}" style="--c:${isBankTransfer(open)?'#2b82ba':'#26a17b'}">${esc(payoutIcon(open))}</span>
+          <div><small>${esc(payoutLabel(open))} · ${esc(open.network)}</small><b class="amt">${money(open.amount)}</b>
+          ${payoutTry(open)!=null?`<small class="wd-try-confirm">=${tryMoney(payoutTry(open))} · 1 USD = ${fmt(Number(open.rate_try),4)} ₺</small>`:''}</div></div>
         <div class="wd-status"><small class="mono">${open.bank_holder?esc(open.bank_holder)+' · ':''}${esc(open.address)}</small><span class="st ${open.status}">${L(open.status)}</span></div>
         <p class="wd-info">${L('withdrawProcessing')}</p>
         <div class="btns"><button class="btn done" data-close>Kapat</button></div>`);
@@ -1291,32 +1315,59 @@
     }
     if (!wdNet || !r.networks.some((n) => n.id === wdNet)) wdNet = r.networks[0].id;
     const net = r.networks.find((n) => n.id === wdNet);
-    const isIban = String(net.label).toUpperCase()==='IBAN' && String(net.network)==='TR / TRY';
+    const isIban = isBankTransfer(net);
     const min = Math.max(10, r.min, net.min_usd || 0);
     sheet(`<h2>${L('withdrawTitle')}</h2>
       <div class="pay-sec">${L('balance')} <span>${money(r.balance)}</span></div><div class="pay-sec">${L('chooseMethod')}</div>
       <div class="coins">${(r.display_networks || r.networks).map((n) => `<button
         class="coin${n.id === wdNet ? ' sel' : ''}${!n.enabled ? ' unavailable' : ''}"
         ${n.enabled ? `data-net="${n.id}"` : 'disabled aria-disabled="true"'}>
-        <span class="coin-ico" style="--c:${esc(n.color)}">${esc(coinSym(n.label))}</span>
-        <span><b>${esc(n.label)}</b><small>${esc(n.network)}${!n.enabled ? ' · Yakında' : ''}</small></span>
+        <span class="coin-ico ${isBankTransfer(n)?'tr-bank-icon':''}" style="--c:${esc(n.color)}">${esc(payoutIcon(n))}</span>
+        <span><b>${esc(payoutLabel(n))}</b><small>${isBankTransfer(n)?'🇹🇷 TR / TRY':esc(n.network)}${!n.enabled ? ' · Yakında' : ''}</small></span>
       </button>`).join('')}</div>
-      <p class="wd-info">${isIban ? L('bankNotice') : "Talep tutarı USD'dir. Ödenecek coin tutarı ödeme günündeki kura ve ağ masrafına bağlıdır."}</p>
+      <p class="wd-info">${isIban ? 'USD bakiyesi otomatik TL’ye çevrilir. Talep sırasındaki kur ve TL ödeme tutarı kayıt altına alınır; banka transferi yönetici tarafından yapılır.' : "Talep tutarı USD'dir. Ödenecek coin tutarı ödeme günündeki kura ve ağ masrafına bağlıdır."}</p>
       ${isIban ? `<label class="bank-withdraw-label">${L('bankHolder')}</label><input id="wdHolder" class="wd-input" maxlength="100" autocomplete="name" placeholder="${L('holderPlaceholder')}">
          <label class="bank-withdraw-label">${L('bankIban')}</label>` : ''}
       <input id="wdAddr" class="wd-input mono" ${isIban?'maxlength="34" inputmode="text"':'maxlength="120"'} placeholder="${isIban?L('ibanPlaceholder'):esc(net.label)+' '+esc(net.network)+' cüzdan adresin'}" autocomplete="off" style="margin-top:12px">
       <div class="wd-amt"><input id="wdAmt" class="wd-input" type="number" step="0.01" min="${min}" placeholder="${L('withdrawAmount')}"><button class="wd-max" id="wdMax">${L('max')}</button></div>
       <p class="wd-info" id="wdInfo"></p>
-      <div class="btns"><button class="btn gold" id="wdBtn" ${r.balance < min ? 'disabled' : ''}>${L('requestWithdrawal')}</button></div>
+      ${isIban ? `<div class="bank-try-preview" id="bankTryPreview" role="status" aria-live="polite">
+         <span id="bankTryRate">USD/TRY kuru alınıyor…</span>
+         <strong id="bankTryAmount">— ₺</strong>
+         <small id="bankTryDate">Güncelleme saati bekleniyor…</small>
+         <small>Referans kur: <a href="https://www.exchangerate-api.com/" target="_blank" rel="noopener noreferrer">ExchangeRate-API</a> · banka kuru farklı olabilir.</small>
+       </div>` : ''}
+      <div class="btns"><button class="btn gold" id="wdBtn" ${r.balance < min || isIban ? 'disabled' : ''}>${L('requestWithdrawal')}</button></div>
       <button class="pay-cancel" data-close>Vazgeç</button>`);
     $('#sheet').querySelectorAll('[data-net]').forEach((b) => b.onclick = () => { wdNet = Number(b.dataset.net); sfx('tap'); showWithdraw(); });
     const amt = $('#wdAmt');
+    let currentBankFx = null;
+    const wdButton = $('#wdBtn');
     const info = () => {
-      const a = Number(amt.value) || 0, fee = net.fee_usd || 0;
-      $('#wdInfo').innerHTML = `En az ${money(min)}${fee ? ` · ağ ücreti ${money(fee)}` : ''}${a > fee ? ` · cüzdanına geçecek: <b>${money(a - fee)}</b>` : ''}`;
+      const a = Number(amt.value) || 0, fee = Number(net.fee_usd)||0;
+      $('#wdInfo').innerHTML = `En az ${money(min)}${fee ? ` · ağ ücreti ${money(fee)}` : ''}${a > fee ? ` · net USD: <b>${money(a-fee)}</b>` : ''}`;
+      if(isIban){
+        const el=$('#bankTryAmount');
+        if(el)el.textContent=currentBankFx && a>fee ? tryMoney(Math.round((a-fee)*currentBankFx.rate*100)/100):'— ₺';
+        wdButton.disabled = !currentBankFx || !Number.isFinite(a) || a<min || a>r.balance || a<=fee;
+      }
     };
-    amt.oninput = info;
+    amt.oninput=info;
     info();
+    if(isIban){
+      void bankWithdrawalQuote().then(fx=>{
+        if(!$('#bankTryPreview')||Number(wdNet)!==Number(net.id))return;
+        currentBankFx=fx;
+        $('#bankTryRate').textContent='1 USD = '+fmt(fx.rate,4)+' ₺';
+        $('#bankTryDate').textContent=new Date(fx.updated*1000).toLocaleString(localeTag());
+        info();
+      }).catch(()=>{
+        if(!$('#bankTryPreview'))return;
+        $('#bankTryRate').textContent='Güncel USD/TRY kuru alınamadı.';
+        $('#bankTryDate').textContent='Banka havalesi için kur gerekli, lütfen tekrar dene.';
+        wdButton.disabled=true;
+      });
+    }
     $('#wdMax').onclick = () => { amt.value = Math.floor(r.balance * 100) / 100; info(); };
     $('#wdBtn').onclick = () => run(async () => {
       const a = Number(amt.value) || 0;
@@ -1326,7 +1377,9 @@
       if (isIban && (!/^TR[0-9]{24}$/i.test(address) || holder.length < 5)) {
         toast('Geçerli TR IBAN ve hesap sahibi adı soyadı gir.', true); return;
       }
-      if (!confirmLocalized(`${L('withdrawConfirm')}\n\n${money(a)}\n${isIban?'IBAN: ':'Adres: '}${address}\n${isIban?L('bankHolder')+': '+holder+'\n':''}${net.label} ${net.network}\n\n${isIban?L('bankNotice'):'Adresi kontrol et; yanlış adrese gönderilen ödeme geri alınamaz.'}`)) return;
+      if(isIban && !currentBankFx){toast('Güncel USD/TRY kuru alınamadı.',true);return;}
+      const tryTotal=isIban?tryMoney(Math.round((a-Number(net.fee_usd||0))*currentBankFx.rate*100)/100):null;
+      if (!confirmLocalized(`${L('withdrawConfirm')}\n\n${money(a)}${isIban?' ≈ '+tryTotal:''}\n${isIban?'IBAN: ':'Adres: '}${address}\n${isIban?L('bankHolder')+': '+holder+'\n':''}${payoutLabel(net)} ${net.network}\n\n${isIban?'TL tutarı sunucudaki güncel kurla talep anında kesinleşir. Havale manuel yapılır.':'Adresi kontrol et; yanlış adrese gönderilen ödeme geri alınamaz.'}`)) return;
       RW = (await api('withdraw', { network: wdNet, address, bank_holder: holder, amount: a })).rewards;
       closeSheet();
       renderRewards();
@@ -1368,8 +1421,13 @@
   $('#btnSettings').onclick = () => {
     sheet(`
       <h2>${L('settings')}</h2>
-      <div class="lang-head"><b>🌐 ${L('language')}</b><small>${L('languageHint')}</small></div>
-      <div class="language-grid" role="group" aria-label="${L('language')}">
+      <div class="lang-head language-selector">
+        <div><b>🌐 ${L('language')}</b><small>${L('languageHint')}</small></div>
+        <button type="button" class="language-circle" id="langToggle"
+          aria-label="${L('language')}: ${i18n.languages.find(x=>x.code===prefs.language)?.name || 'Türkçe'}"
+          aria-expanded="false" aria-controls="languageList">${i18n.languages.find(x=>x.code===prefs.language)?.flag || '🇹🇷'}</button>
+      </div>
+      <div id="languageList" class="language-grid language-collapsed hidden" role="group" aria-label="${L('language')}">
         ${i18n.languages.map(x=>`<button type="button" class="language-option${prefs.language===x.code?' active':''}" data-lang="${x.code}" aria-pressed="${prefs.language===x.code}"><span class="language-flag">${x.flag}</span><span>${x.name}</span></button>`).join('')}
       </div>
       <div class="rows">
@@ -1381,6 +1439,11 @@
         <button class="btn account-delete" id="openAccountDelete">🗑️ ${L('delete')}</button>
         <button class="btn done" data-close>${L('close')}</button>
       </div>`);
+    $('#langToggle').onclick=()=>{
+      const list=$('#languageList');
+      const expanded=list.classList.toggle('hidden')===false;
+      $('#langToggle').setAttribute('aria-expanded',String(expanded));
+    };
     $('#sheet').querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{
       prefs.language=b.dataset.lang;
       savePrefs();
