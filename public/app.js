@@ -1180,7 +1180,7 @@
   let wdNet = null;
   const money = (n) => '$' + fmt(n, 2);
   const kindName = { weekly: 'Haftalık ödül', referral: 'Referans ödülü', oil_referral: 'Petrol referans kazancı', oil_sale: 'Petrol satış kazancı', upgrade: 'Pompa yükseltme', coin_migration: 'Mevcut coin aktarımı', withdraw: 'Çekim talebi', refund: 'Çekim iadesi', admin: 'Düzeltme' };
-  const wdStatus = { pending: 'BEKLEMEDE', approved: 'ONAYLANDI', paid: 'ÖDENDİ', rejected: 'REDDEDİLDİ' };
+  const wdStatus = { pending: 'pending', approved: 'approved', paid: 'paid', rejected: 'rejected' };
 
   function timeLeft(ts) {
     const s = Math.max(0, ts - serverNow());
@@ -1211,7 +1211,7 @@
   const moveRow = (m) => `<div class="mv">
       <span class="mv-ico k-${m.kind}">${kindIco[m.kind] || '•'}</span>
       <span class="mv-txt"><b>${esc(m.title)}</b><small>${fmtDate(m.t)}${m.sub ? ' · ' + esc(m.sub) : ''}</small></span>
-      <span class="mv-amt"><b class="${m.amount > 0 ? 'plus' : 'minus'}">${m.amount > 0 ? '+' : '−'}${money(Math.abs(m.amount))}</b>${m.status ? `<span class="st ${m.status}">${wdStatus[m.status]}</span>` : ''}</span>
+      <span class="mv-amt"><b class="${m.amount > 0 ? 'plus' : 'minus'}">${m.amount > 0 ? '+' : '−'}${money(Math.abs(m.amount))}</b>${m.status ? `<span class="st ${m.status}">${L(wdStatus[m.status])}</span>` : ''}</span>
     </div>`;
   const emptyMoves = '<div class="mv-empty">Henüz hesap hareketi yok.<br>Haftalık yarışmadan ve referans ödüllerinden kazandıkların burada görünür.</div>';
 
@@ -1279,27 +1279,30 @@
       sheet(`<h2>Çekim talebin</h2>
         <div class="pay-box"><span class="coin-ico big" style="--c:#26a17b">${esc(coinSym(open.label))}</span>
           <div><small>${esc(open.label)} · ${esc(open.network)}</small><b class="amt">${money(open.amount)}</b></div></div>
-        <div class="wd-status"><small class="mono">${esc(open.address)}</small><span class="st ${open.status}">${wdStatus[open.status]}</span></div>
-        <p class="wd-info">Talebin işleniyor. Ödeme yapılınca sana bottan mesaj gelecek.</p>
+        <div class="wd-status"><small class="mono">${open.bank_holder?esc(open.bank_holder)+' · ':''}${esc(open.address)}</small><span class="st ${open.status}">${L(open.status)}</span></div>
+        <p class="wd-info">${L('withdrawProcessing')}</p>
         <div class="btns"><button class="btn done" data-close>Kapat</button></div>`);
       return;
     }
     if (!wdNet || !r.networks.some((n) => n.id === wdNet)) wdNet = r.networks[0].id;
     const net = r.networks.find((n) => n.id === wdNet);
+    const isIban = String(net.label).toUpperCase()==='IBAN' && String(net.network)==='TR / TRY';
     const min = Math.max(10, r.min, net.min_usd || 0);
-    sheet(`<h2>Çekim</h2>
-      <div class="pay-sec">ÇEKİLEBİLİR BAKİYE <span>${money(r.balance)}</span></div><div class="pay-sec">YÖNTEM SEÇ</div>
+    sheet(`<h2>${L('withdrawTitle')}</h2>
+      <div class="pay-sec">${L('balance')} <span>${money(r.balance)}</span></div><div class="pay-sec">${L('chooseMethod')}</div>
       <div class="coins">${(r.display_networks || r.networks).map((n) => `<button
         class="coin${n.id === wdNet ? ' sel' : ''}${!n.enabled ? ' unavailable' : ''}"
         ${n.enabled ? `data-net="${n.id}"` : 'disabled aria-disabled="true"'}>
         <span class="coin-ico" style="--c:${esc(n.color)}">${esc(coinSym(n.label))}</span>
         <span><b>${esc(n.label)}</b><small>${esc(n.network)}${!n.enabled ? ' · Yakında' : ''}</small></span>
       </button>`).join('')}</div>
-      <p class="wd-info">Talep tutarı USD'dir. Ödenecek coin tutarı ödeme günündeki kura ve ağ masrafına bağlıdır.</p>
-      <input id="wdAddr" class="wd-input mono" placeholder="${esc(net.label)} ${esc(net.network)} cüzdan adresin" autocomplete="off" style="margin-top:12px">
-      <div class="wd-amt"><input id="wdAmt" class="wd-input" type="number" step="0.01" min="${min}" placeholder="Tutar ($)"><button class="wd-max" id="wdMax">MAKS</button></div>
+      <p class="wd-info">${isIban ? L('bankNotice') : "Talep tutarı USD'dir. Ödenecek coin tutarı ödeme günündeki kura ve ağ masrafına bağlıdır."}</p>
+      ${isIban ? `<label class="bank-withdraw-label">${L('bankHolder')}</label><input id="wdHolder" class="wd-input" maxlength="100" autocomplete="name" placeholder="${L('holderPlaceholder')}">
+         <label class="bank-withdraw-label">${L('bankIban')}</label>` : ''}
+      <input id="wdAddr" class="wd-input mono" ${isIban?'maxlength="34" inputmode="text"':'maxlength="120"'} placeholder="${isIban?L('ibanPlaceholder'):esc(net.label)+' '+esc(net.network)+' cüzdan adresin'}" autocomplete="off" style="margin-top:12px">
+      <div class="wd-amt"><input id="wdAmt" class="wd-input" type="number" step="0.01" min="${min}" placeholder="${L('withdrawAmount')}"><button class="wd-max" id="wdMax">${L('max')}</button></div>
       <p class="wd-info" id="wdInfo"></p>
-      <div class="btns"><button class="btn gold" id="wdBtn" ${r.balance < min ? 'disabled' : ''}>ÇEKİM TALEBİ OLUŞTUR</button></div>
+      <div class="btns"><button class="btn gold" id="wdBtn" ${r.balance < min ? 'disabled' : ''}>${L('requestWithdrawal')}</button></div>
       <button class="pay-cancel" data-close>Vazgeç</button>`);
     $('#sheet').querySelectorAll('[data-net]').forEach((b) => b.onclick = () => { wdNet = Number(b.dataset.net); sfx('tap'); showWithdraw(); });
     const amt = $('#wdAmt');
@@ -1313,9 +1316,13 @@
     $('#wdBtn').onclick = () => run(async () => {
       const a = Number(amt.value) || 0;
       if (!Number.isFinite(a) || a < min || a > r.balance) { toast('Çekim tutarı ' + money(min) + ' ile kullanılabilir bakiye arasında olmalı.', true); return; }
-      const address = $('#wdAddr').value.trim();
-      if (!confirm(`${money(a)} çekim talebi oluşturulsun mu?\n\nAdres: ${address}\nAğ: ${net.label} ${net.network}\n\nAdresi kontrol et; yanlış adrese gönderilen ödeme geri alınamaz.`)) return;
-      RW = (await api('withdraw', { network: wdNet, address, amount: a })).rewards;
+      const address = $('#wdAddr').value.trim().replace(/\s+/g, isIban ? '' : ' ');
+      const holder = isIban ? $('#wdHolder').value.trim() : '';
+      if (isIban && (!/^TR[0-9]{24}$/i.test(address) || holder.length < 5)) {
+        toast('Geçerli TR IBAN ve hesap sahibi adı soyadı gir.', true); return;
+      }
+      if (!confirm(`${L('withdrawConfirm')}\n\n${money(a)}\n${isIban?'IBAN: ':'Adres: '}${address}\n${isIban?L('bankHolder')+': '+holder+'\n':''}${net.label} ${net.network}\n\n${isIban?L('bankNotice'):'Adresi kontrol et; yanlış adrese gönderilen ödeme geri alınamaz.'}`)) return;
+      RW = (await api('withdraw', { network: wdNet, address, bank_holder: holder, amount: a })).rewards;
       closeSheet();
       renderRewards();
       toast('Çekim talebin alındı.', false, 'coin');
