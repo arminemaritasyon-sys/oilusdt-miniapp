@@ -10,7 +10,8 @@
   const $ = (s) => document.querySelector(s);
   const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const fmt = (n, d = 0) => Number(n).toLocaleString('tr-TR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const localeTag = () => ({tr:'tr-TR',en:'en-GB',de:'de-DE',ru:'ru-RU',fr:'fr-FR',es:'es-ES',it:'it-IT',pt:'pt-PT',ar:'ar-SA',zh:'zh-CN'})[prefs?.language] || 'tr-TR';
+  const fmt = (n, d = 0) => Number(n).toLocaleString(localeTag(), { minimumFractionDigits: d, maximumFractionDigits: d });
   const short = (n) => n >= 1e9 ? fmt(n / 1e9, 2) + 'B' : n >= 1e6 ? fmt(n / 1e6, 2) + 'M' : n >= 1e4 ? fmt(n / 1e3, 1) + 'K' : fmt(n, n < 10 ? 2 : 0);
 
   let S = null;          // sunucu durumu
@@ -23,7 +24,7 @@
   let gramPriceUpdatedAt = 0;
   // Gramcoin (GRAM / eski TON) tutarı tahmini USD karşılığıdır;
   // gerçek ödül defteri USD olarak kalır.
-  const gramNumber = (n) => Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 8, maximumFractionDigits: 8 });
+  const gramNumber = (n) => Number(n).toLocaleString(localeTag(), { minimumFractionDigits: 8, maximumFractionDigits: 8 });
   function renderGramBalance() {
     const usd = Math.max(0, Number(S?.balance) || 0);
     $('#coinUsdEquivalent').textContent = '$' + fmt(usd, 2) + ' USD';
@@ -53,6 +54,10 @@
   try { prefs = { ...prefs, ...JSON.parse(localStorage.getItem('op-prefs') || '{}') }; } catch {}
   if (!i18n?.languages.some(x=>x.code===prefs.language)) prefs.language='tr';
   function applyLanguage() { i18n?.apply(prefs.language); }
+  const translateUI = (value) => i18n?.translate?.(String(value ?? ''),prefs.language) || String(value ?? '');
+  function confirmLocalized(message) {
+    return window.confirm(translateUI(message));
+  }
 
 
   /* ---------- API ---------- */
@@ -203,7 +208,7 @@
   let toastTimer;
   function toast(msg, err = false, sound = err ? 'error' : 'success') {
     const t = $('#toast');
-    t.textContent = msg;
+    t.textContent = translateUI(msg);
     t.className = 'toast' + (err ? ' err' : '');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.add('hidden'), 2600);
@@ -1196,7 +1201,7 @@
   }
 
   const kindIco = { weekly: '🏆', referral: '👥', oil_referral: '👥', oil_sale: '🛢', upgrade: '⚡', coin_migration: '🪙', withdraw: '↗', refund: '↩', admin: '⚙' };
-  const fmtDate = (t) => new Date(t * 1000).toLocaleString('tr-TR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const fmtDate = (t) => new Date(t * 1000).toLocaleString(localeTag(), { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
   /** Bakiye hareketleri + çekim talepleri, en yeniden eskiye. */
   function rewardMoves(r) {
@@ -1321,7 +1326,7 @@
       if (isIban && (!/^TR[0-9]{24}$/i.test(address) || holder.length < 5)) {
         toast('Geçerli TR IBAN ve hesap sahibi adı soyadı gir.', true); return;
       }
-      if (!confirm(`${L('withdrawConfirm')}\n\n${money(a)}\n${isIban?'IBAN: ':'Adres: '}${address}\n${isIban?L('bankHolder')+': '+holder+'\n':''}${net.label} ${net.network}\n\n${isIban?L('bankNotice'):'Adresi kontrol et; yanlış adrese gönderilen ödeme geri alınamaz.'}`)) return;
+      if (!confirmLocalized(`${L('withdrawConfirm')}\n\n${money(a)}\n${isIban?'IBAN: ':'Adres: '}${address}\n${isIban?L('bankHolder')+': '+holder+'\n':''}${net.label} ${net.network}\n\n${isIban?L('bankNotice'):'Adresi kontrol et; yanlış adrese gönderilen ödeme geri alınamaz.'}`)) return;
       RW = (await api('withdraw', { network: wdNet, address, bank_holder: holder, amount: a })).rewards;
       closeSheet();
       renderRewards();
@@ -1379,6 +1384,7 @@
     $('#sheet').querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{
       prefs.language=b.dataset.lang;
       savePrefs();
+      render();
       applyLanguage();
       $('#btnSettings').onclick();
       const active=document.querySelector('.view.active')?.id?.replace('v-','');
@@ -1450,17 +1456,10 @@
     };
   };
 
-  /* ---------- Günlük hazine haritası tanıtımı ---------- */
+  /* ---------- Her yeni uygulama açılışında hazine haritası ---------- */
   let treasureShownInSession = false;
   function showTreasurePopup() {
     if (treasureShownInSession || !S) return;
-    let today;
-    try {
-      today = new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul'}).format(new Date());
-    } catch { today = new Date().toISOString().slice(0,10); }
-    const userId = tg?.initDataUnsafe?.user?.id || qs.get('dev') || 'player';
-    const storageKey = 'op-treasure-v1-' + userId;
-    try { if (localStorage.getItem(storageKey) === today) return; } catch {}
     treasureShownInSession = true;
     const overlay=$('#treasureOverlay');
     if (!overlay) return;
@@ -1473,7 +1472,6 @@
     $('#treasureX').setAttribute('aria-label', L('close'));
     const dismiss=()=>{
       overlay.classList.add('hidden');
-      try { localStorage.setItem(storageKey,today); } catch {}
     };
     $('#treasureSkip').onclick=dismiss;
     $('#treasureX').onclick=dismiss;
