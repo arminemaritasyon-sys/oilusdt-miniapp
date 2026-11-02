@@ -1450,6 +1450,38 @@
     };
   };
 
+  /* ---------- Günlük hazine haritası tanıtımı ---------- */
+  let treasureShownInSession = false;
+  function showTreasurePopup() {
+    if (treasureShownInSession || !S) return;
+    let today;
+    try {
+      today = new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul'}).format(new Date());
+    } catch { today = new Date().toISOString().slice(0,10); }
+    const userId = tg?.initDataUnsafe?.user?.id || qs.get('dev') || 'player';
+    const storageKey = 'op-treasure-v1-' + userId;
+    try { if (localStorage.getItem(storageKey) === today) return; } catch {}
+    treasureShownInSession = true;
+    const overlay=$('#treasureOverlay');
+    if (!overlay) return;
+    $('#treasureTitle').textContent = L('treasureTitle');
+    $('#treasureSubtitle').textContent = L('treasureSubtitle');
+    $('#treasureBody').textContent = L('treasureCopy');
+    $('#treasureDisclaimer').textContent = L('treasureFine');
+    $('#treasureShop').textContent = '⚡ ' + L('treasureCta');
+    $('#treasureSkip').textContent = L('treasureClose');
+    $('#treasureX').setAttribute('aria-label', L('close'));
+    const dismiss=()=>{
+      overlay.classList.add('hidden');
+      try { localStorage.setItem(storageKey,today); } catch {}
+    };
+    $('#treasureSkip').onclick=dismiss;
+    $('#treasureX').onclick=dismiss;
+    $('#treasureShop').onclick=()=>{dismiss();show('shop');};
+    overlay.onclick=e=>{if(e.target===overlay)dismiss();};
+    overlay.classList.remove('hidden');
+  }
+
   /* ---------- Başlangıç ---------- */
   async function boot() {
     if (tg) {
@@ -1468,7 +1500,11 @@
       bankAccounts = j.bank_accounts || [];
       refreshGramQuote();
       $('#loader').classList.add('out');
-      setTimeout(() => $('#loader').classList.add('hidden'), 400);
+      applyLanguage();
+      setTimeout(() => {
+        $('#loader').classList.add('hidden');
+        showTreasurePopup();
+      }, 400);
     } catch (e) {
       $('#loadMsg').textContent = e.message;
     }
