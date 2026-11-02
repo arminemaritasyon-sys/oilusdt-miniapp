@@ -1368,8 +1368,13 @@
   $('#btnSettings').onclick = () => {
     sheet(`
       <h2>${L('settings')}</h2>
-      <div class="lang-head"><b>🌐 ${L('language')}</b><small>${L('languageHint')}</small></div>
-      <div class="language-grid" role="group" aria-label="${L('language')}">
+      <div class="lang-head language-selector">
+        <div><b>🌐 ${L('language')}</b><small>${L('languageHint')}</small></div>
+        <button type="button" class="language-circle" id="langToggle"
+          aria-label="${L('language')}: ${i18n.languages.find(x=>x.code===prefs.language)?.name || 'Türkçe'}"
+          aria-expanded="false" aria-controls="languageList">${i18n.languages.find(x=>x.code===prefs.language)?.flag || '🇹🇷'}</button>
+      </div>
+      <div id="languageList" class="language-grid language-collapsed hidden" role="group" aria-label="${L('language')}">
         ${i18n.languages.map(x=>`<button type="button" class="language-option${prefs.language===x.code?' active':''}" data-lang="${x.code}" aria-pressed="${prefs.language===x.code}"><span class="language-flag">${x.flag}</span><span>${x.name}</span></button>`).join('')}
       </div>
       <div class="rows">
@@ -1381,6 +1386,11 @@
         <button class="btn account-delete" id="openAccountDelete">🗑️ ${L('delete')}</button>
         <button class="btn done" data-close>${L('close')}</button>
       </div>`);
+    $('#langToggle').onclick=()=>{
+      const list=$('#languageList');
+      const expanded=list.classList.toggle('hidden')===false;
+      $('#langToggle').setAttribute('aria-expanded',String(expanded));
+    };
     $('#sheet').querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{
       prefs.language=b.dataset.lang;
       savePrefs();
