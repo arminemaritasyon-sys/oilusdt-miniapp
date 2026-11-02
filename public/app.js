@@ -1334,7 +1334,8 @@
       ${isIban ? `<div class="bank-try-preview" id="bankTryPreview" role="status" aria-live="polite">
          <span id="bankTryRate">USD/TRY kuru alınıyor…</span>
          <strong id="bankTryAmount">— ₺</strong>
-         <small id="bankTryDate">Kur: ExchangeRate-API · referans kur</small>
+         <small id="bankTryDate">Güncelleme saati bekleniyor…</small>
+         <small>Referans kur: <a href="https://www.exchangerate-api.com/" target="_blank" rel="noopener noreferrer">ExchangeRate-API</a> · banka kuru farklı olabilir.</small>
        </div>` : ''}
       <div class="btns"><button class="btn gold" id="wdBtn" ${r.balance < min || isIban ? 'disabled' : ''}>${L('requestWithdrawal')}</button></div>
       <button class="pay-cancel" data-close>Vazgeç</button>`);
@@ -1358,7 +1359,7 @@
         if(!$('#bankTryPreview')||Number(wdNet)!==Number(net.id))return;
         currentBankFx=fx;
         $('#bankTryRate').textContent='1 USD = '+fmt(fx.rate,4)+' ₺';
-        $('#bankTryDate').textContent='ExchangeRate-API · '+new Date(fx.updated*1000).toLocaleString(localeTag());
+        $('#bankTryDate').textContent=new Date(fx.updated*1000).toLocaleString(localeTag());
         info();
       }).catch(()=>{
         if(!$('#bankTryPreview'))return;
