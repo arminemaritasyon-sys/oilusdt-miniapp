@@ -1529,7 +1529,6 @@
     $('#treasureTitle').textContent = L('treasureTitle');
     $('#treasureSubtitle').textContent = L('treasureSubtitle');
     $('#treasureBody').textContent = L('treasureCopy');
-    $('#treasureDisclaimer').textContent = L('treasureFine');
     $('#treasureShop').textContent = '⚡ ' + L('treasureCta');
     $('#treasureSkip').textContent = L('treasureClose');
     $('#treasureX').setAttribute('aria-label', L('close'));
