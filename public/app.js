@@ -1450,17 +1450,10 @@
     };
   };
 
-  /* ---------- Günlük hazine haritası tanıtımı ---------- */
+  /* ---------- Her yeni uygulama açılışında hazine haritası ---------- */
   let treasureShownInSession = false;
   function showTreasurePopup() {
     if (treasureShownInSession || !S) return;
-    let today;
-    try {
-      today = new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul'}).format(new Date());
-    } catch { today = new Date().toISOString().slice(0,10); }
-    const userId = tg?.initDataUnsafe?.user?.id || qs.get('dev') || 'player';
-    const storageKey = 'op-treasure-v1-' + userId;
-    try { if (localStorage.getItem(storageKey) === today) return; } catch {}
     treasureShownInSession = true;
     const overlay=$('#treasureOverlay');
     if (!overlay) return;
@@ -1473,7 +1466,6 @@
     $('#treasureX').setAttribute('aria-label', L('close'));
     const dismiss=()=>{
       overlay.classList.add('hidden');
-      try { localStorage.setItem(storageKey,today); } catch {}
     };
     $('#treasureSkip').onclick=dismiss;
     $('#treasureX').onclick=dismiss;
